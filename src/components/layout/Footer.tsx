@@ -1,44 +1,61 @@
 import Link from 'next/link'
-import { Users, Mail, Phone, MapPin, ExternalLink } from 'lucide-react'
+import { Mail, MapPin, ExternalLink } from 'lucide-react'
 
 export function Footer() {
   return (
-    <footer id="contact" className="border-t border-white/10 bg-[#0A0A0A] pt-16 pb-8">
-      <div className="container-main">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 mb-12">
+    <footer style={{
+      background: '#0D0D0D',
+      borderTop: '1px solid rgba(255,255,255,0.06)',
+    }}>
+      <div className="container-main" style={{ padding: '64px 24px 0' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 200px), 1fr))',
+          gap: 40,
+          marginBottom: 48,
+        }}>
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B61F2B] to-[#7A111B] flex items-center justify-center">
-                <span className="text-white font-bold text-sm">BNI</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <div style={{
+                width: 34, height: 34, borderRadius: 9,
+                background: 'linear-gradient(135deg, #B61F2B, #6e0f19)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                boxShadow: '0 2px 10px rgba(182,31,43,0.40)',
+                flexShrink: 0,
+              }}>
+                <span style={{ color: '#fff', fontWeight: 900, fontSize: 11, fontFamily: '"Playfair Display", serif' }}>BNI</span>
               </div>
               <div>
-                <div className="font-bold text-white">BNI Krypton</div>
-                <div className="text-xs text-white/40">Business Network</div>
+                <div style={{ color: '#F0F0F0', fontWeight: 700, fontSize: 14 }}>BNI Krypton</div>
+                <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 10, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Business Network</div>
               </div>
             </div>
-            <p className="text-white/50 text-sm leading-relaxed">
+            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13, lineHeight: 1.7 }}>
               Nagpur&apos;s premier business networking chapter. Building lasting relationships and
-              driving business growth through referrals.
+              driving growth through referrals.
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">Quick Links</h4>
-            <ul className="space-y-2">
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.28)', marginBottom: 14,
+            }}>
+              Quick Links
+            </div>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 9, listStyle: 'none' }}>
               {[
-                { href: '#members', label: 'Browse Members' },
-                { href: '#events', label: 'Upcoming Events' },
-                { href: '/categories', label: 'Categories' },
-                { href: '/login', label: 'Member Login' },
-                { href: '/admin', label: 'Admin Panel' },
+                { href: '/#members', label: 'Browse Members' },
+                { href: '/#events',  label: 'Upcoming Events' },
+                { href: '/login',    label: 'Member Login' },
+                { href: '/admin',    label: 'Admin Panel' },
               ].map(({ href, label }) => (
                 <li key={href}>
-                  <Link
-                    href={href}
-                    className="text-white/50 hover:text-white text-sm transition-colors duration-200"
-                  >
+                  <Link href={href} className="footer-link" style={{
+                    color: 'rgba(255,255,255,0.40)', fontSize: 13, fontWeight: 500, textDecoration: 'none',
+                  }}>
                     {label}
                   </Link>
                 </li>
@@ -48,47 +65,70 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">Contact</h4>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-2 text-white/50 text-sm">
-                <MapPin className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
-                <span>Nagpur, Maharashtra, India</span>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.28)', marginBottom: 14,
+            }}>
+              Contact
+            </div>
+            <ul style={{ display: 'flex', flexDirection: 'column', gap: 12, listStyle: 'none' }}>
+              <li style={{ display: 'flex', gap: 10 }}>
+                <MapPin size={14} style={{ color: '#B61F2B', flexShrink: 0, marginTop: 1 }} />
+                <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 13, lineHeight: 1.55 }}>
+                  Nagpur, Maharashtra, India
+                </span>
               </li>
-              <li className="flex items-center gap-2 text-white/50 text-sm">
-                <Mail className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
-                <a href="mailto:krypton@bni.com" className="hover:text-white transition-colors">
+              <li style={{ display: 'flex', gap: 10 }}>
+                <Mail size={14} style={{ color: '#B61F2B', flexShrink: 0, marginTop: 1 }} />
+                <a href="mailto:krypton@bni.com" className="footer-link" style={{
+                  color: 'rgba(255,255,255,0.40)', fontSize: 13, textDecoration: 'none',
+                }}>
                   krypton@bni.com
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* BNI Reference */}
+          {/* Chapter */}
           <div>
-            <h4 className="font-semibold text-white mb-4 text-sm uppercase tracking-wider">Chapter</h4>
+            <div style={{
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.10em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.28)', marginBottom: 14,
+            }}>
+              Chapter
+            </div>
             <a
               href="https://bni-nagpur.in/en-IN/chapterdetail?chapterId=7QKJvFtIdz9xPf8f9ZWHIg%3D%3D&name=BNI%20Krypton"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#B61F2B]/10 to-[#7A111B]/5 border border-[#B61F2B]/20 text-[#B61F2B] text-sm font-medium hover:from-[#B61F2B]/20 hover:to-[#7A111B]/10 transition-all duration-200"
+              target="_blank" rel="noopener noreferrer"
+              className="footer-chapter-link"
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: 7,
+                padding: '8px 14px', borderRadius: 9,
+                background: 'rgba(182,31,43,0.08)', border: '1px solid rgba(182,31,43,0.18)',
+                color: '#B61F2B', fontSize: 12, fontWeight: 600,
+                textDecoration: 'none',
+              }}
             >
-              <ExternalLink className="w-4 h-4" />
-              View BNI Chapter Page
+              <ExternalLink size={12} /> View BNI Page
             </a>
-            <p className="text-white/30 text-xs mt-4 leading-relaxed">
-              BNI® — Business Network International. All rights reserved.
+            <p style={{ color: 'rgba(255,255,255,0.20)', fontSize: 11, marginTop: 12, lineHeight: 1.6 }}>
+              BNI® — Business Network International.
             </p>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-white/30 text-sm">
-            © {new Date().getFullYear()} BNI Krypton Chapter. Built with ❤️ for business networking.
+        <div style={{
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          padding: '20px 0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12,
+        }}>
+          <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12 }}>
+            © {new Date().getFullYear()} BNI Krypton Chapter. All rights reserved.
           </p>
-          <div className="flex items-center gap-4">
-            <Link href="/privacy" className="text-white/30 hover:text-white/60 text-xs transition-colors">Privacy</Link>
-            <Link href="/terms" className="text-white/30 hover:text-white/60 text-xs transition-colors">Terms</Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            <Link href="/privacy" className="footer-link" style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, textDecoration: 'none' }}>Privacy</Link>
+            <Link href="/terms"   className="footer-link" style={{ color: 'rgba(255,255,255,0.22)', fontSize: 12, textDecoration: 'none' }}>Terms</Link>
           </div>
         </div>
       </div>

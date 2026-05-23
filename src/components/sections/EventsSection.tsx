@@ -39,57 +39,141 @@ export function EventsSection({ events }: { events: Event[] }) {
         </div>
 
         {/* Events Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {events.map((event, i) => (
-            <motion.div
-              key={event.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1, duration: 0.4 }}
-              className="glass rounded-2xl overflow-hidden premium-card group"
-            >
-              {/* Event image or placeholder */}
-              <div className="h-40 bg-gradient-to-br from-[#B61F2B]/20 to-[#7A111B]/10 relative overflow-hidden">
-                {event.image ? (
-                  <Image src={event.image} alt={event.title} fill className="object-cover" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Calendar className="w-16 h-16 text-white/10" />
-                  </div>
-                )}
-                <div className="absolute top-3 left-3">
-                  <div className="glass rounded-xl px-3 py-2 text-center min-w-[3rem]">
-                    <div className="text-[#D4AF37] font-bold text-lg leading-none">
-                      {new Date(event.eventDate).getDate()}
-                    </div>
-                    <div className="text-white/50 text-xs">
-                      {new Date(event.eventDate).toLocaleString('en', { month: 'short' })}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {events.map((event, i) => {
+            const isMilestone = event.slug === '300th-milestone-meeting';
+            const isFvd = event.slug === 'focus-visitors-day-2026';
 
-              <div className="p-5">
-                <h3 className="font-semibold text-white text-lg mb-2 group-hover:text-[#D4AF37] transition-colors line-clamp-2">
-                  {event.title}
-                </h3>
-                <div className="flex items-center gap-2 text-white/50 text-sm mb-3">
-                  <Calendar className="w-4 h-4 flex-shrink-0" />
-                  <span>{formatEventDate(event.eventDate)}</span>
-                </div>
-                {event.location && (
-                  <div className="flex items-center gap-2 text-white/50 text-sm mb-4">
-                    <MapPin className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{event.location}</span>
+            let borderStyle = '1px solid rgba(255, 255, 255, 0.07)';
+            let shadowStyle = '0 8px 32px rgba(0, 0, 0, 0.5)';
+            let cardBg = 'linear-gradient(180deg, #141414 0%, #0d0d0d 100%)';
+            let badgeText = '';
+
+            if (isMilestone) {
+              borderStyle = '1px solid rgba(212, 175, 55, 0.45)';
+              shadowStyle = '0 12px 40px rgba(212, 175, 55, 0.14), 0 0 25px rgba(212, 175, 55, 0.06)';
+              cardBg = 'linear-gradient(135deg, #1a1712 0%, #0d0c0a 100%)';
+              badgeText = '👑 landmark 300th meeting';
+            } else if (isFvd) {
+              borderStyle = '1px solid rgba(182, 31, 43, 0.45)';
+              shadowStyle = '0 12px 40px rgba(182, 31, 43, 0.14), 0 0 25px rgba(182, 31, 43, 0.06)';
+              cardBg = 'linear-gradient(135deg, #1b1213 0%, #0e0a0a 100%)';
+              badgeText = '🚀 focus visitors day (fvd)';
+            }
+
+            return (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1, duration: 0.4 }}
+                style={{
+                  background: cardBg,
+                  border: borderStyle,
+                  borderRadius: 20,
+                  boxShadow: shadowStyle,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  position: 'relative',
+                }}
+                className={`premium-card group ${isMilestone ? 'glow-gold' : isFvd ? 'glow-red' : ''}`}
+              >
+                {/* Event Image or Placeholder */}
+                <div className="h-48 bg-gradient-to-br from-[#B61F2B]/15 to-[#7A111B]/5 relative overflow-hidden">
+                  {event.image ? (
+                    <Image src={event.image} alt={event.title} fill className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-[#181818] to-[#121212]">
+                      <Calendar className="w-16 h-16 text-white/5" />
+                    </div>
+                  )}
+                  
+                  {/* Date Badge Overlay */}
+                  <div className="absolute top-4 left-4 z-10">
+                    <div style={{
+                      background: 'rgba(9, 9, 9, 0.85)',
+                      backdropFilter: 'blur(12px)',
+                      border: isMilestone ? '1px solid rgba(212, 175, 55, 0.4)' : isFvd ? '1px solid rgba(182, 31, 43, 0.4)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: 12,
+                      padding: '8px 14px',
+                      textAlign: 'center',
+                      minWidth: 54,
+                    }}>
+                      <div style={{ color: isMilestone ? '#D4AF37' : '#F0F0F0', fontWeight: 800, fontSize: 20, lineHeight: 1 }}>
+                        {new Date(event.eventDate).getDate()}
+                      </div>
+                      <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', marginTop: 3 }}>
+                        {new Date(event.eventDate).toLocaleString('en', { month: 'short' })}
+                      </div>
+                    </div>
                   </div>
-                )}
-                {event.description && (
-                  <p className="text-white/40 text-sm line-clamp-2 mb-4">{event.description}</p>
-                )}
-              </div>
-            </motion.div>
-          ))}
+                </div>
+
+                {/* Event Content Details */}
+                <div style={{ padding: '24px', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    {badgeText && (
+                      <span style={{
+                        display: 'inline-flex',
+                        padding: '4px 10px',
+                        borderRadius: 6,
+                        background: isMilestone ? 'rgba(212, 175, 55, 0.12)' : 'rgba(182, 31, 43, 0.12)',
+                        border: isMilestone ? '1px solid rgba(212, 175, 55, 0.25)' : '1px solid rgba(182, 31, 43, 0.25)',
+                        color: isMilestone ? '#D4AF37' : '#E85464',
+                        fontSize: 10,
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        marginBottom: 12,
+                      }}>
+                        {badgeText}
+                      </span>
+                    )}
+
+                    <h3 style={{
+                      fontSize: 18,
+                      fontWeight: 800,
+                      color: '#ffffff',
+                      lineHeight: 1.35,
+                      marginBottom: 16,
+                      letterSpacing: '-0.01em',
+                      fontFamily: 'Inter, sans-serif',
+                    }} className="group-hover:text-[#D4AF37] transition-colors line-clamp-2">
+                      {event.title}
+                    </h3>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255, 255, 255, 0.5)', fontSize: 13 }}>
+                        <Calendar className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
+                        <span>{formatEventDate(event.eventDate)}</span>
+                      </div>
+
+                      {event.location && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'rgba(255, 255, 255, 0.5)', fontSize: 13 }}>
+                          <MapPin className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
+                          <span className="truncate">{event.location}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {event.description && (
+                    <p style={{
+                      color: 'rgba(255, 255, 255, 0.5)',
+                      fontSize: 13.5,
+                      lineHeight: 1.6,
+                      marginTop: 16,
+                      whiteSpace: 'pre-line',
+                    }} className={isMilestone || isFvd ? "" : "line-clamp-3"}>
+                      {event.description}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>

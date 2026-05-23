@@ -28,7 +28,14 @@ export function truncate(text: string, length: number): string {
   return text.slice(0, length) + '...'
 }
 
-export function getMemberRoleLabel(role: string): string {
+export function getMemberRoleLabel(role: string, name?: string): string {
+  if (role === 'HEAD_TABLE' && name) {
+    const n = name.toLowerCase()
+    if (n.includes('aliakbbar') && n.includes('maimun')) return 'President'
+    if (n.includes('pratik') && n.includes('bhosale')) return 'Vice President'
+    if (n.includes('jitendra') && n.includes('roy')) return 'Secretary / Treasurer'
+    if (n.includes('khushboo') && n.includes('murarka')) return 'Lead Visitor Host'
+  }
   const labels: Record<string, string> = {
     ED: 'Executive Director',
     SUPPORT: 'Support Team',
@@ -37,3 +44,14 @@ export function getMemberRoleLabel(role: string): string {
   }
   return labels[role] ?? role
 }
+
+export function toTitleCase(str: string): string {
+  if (!str) return ''
+  return str
+    .toLowerCase()
+    .trim()
+    .split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+

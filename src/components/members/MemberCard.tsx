@@ -2,156 +2,247 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Phone, MessageCircle, Globe, User, Crown, Shield, Star } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
-import { getWhatsAppUrl, getMemberRoleLabel, truncate } from '@/lib/utils'
+import { Phone, MessageCircle, Globe, ArrowRight } from 'lucide-react'
+import { getWhatsAppUrl, toTitleCase, getMemberRoleLabel } from '@/lib/utils'
 import type { MemberCardData } from '@/types'
 
 type MemberCardProps = {
   member: MemberCardData
-  variant?: 'default' | 'ed' | 'support' | 'headtable'
   index?: number
 }
 
 const roleConfig = {
   ED: {
-    badge: 'badge-ed',
-    icon: Crown,
-    label: 'Executive Director',
-    cardClass: 'glass-gold glow-gold',
+    accentColor: '#D4AF37', // Gold
+    roleLabel: 'Executive Director',
+    badgeClass: 'badge-ed',
+    cssClass: 'member-card-ed',
   },
   SUPPORT: {
-    badge: 'badge-support',
-    icon: Shield,
-    label: 'Support Team',
-    cardClass: 'glass-red',
+    accentColor: '#E85464', // Ruby Red
+    roleLabel: 'Support Team',
+    badgeClass: 'badge-support',
+    cssClass: 'member-card-support',
   },
   HEAD_TABLE: {
-    badge: 'badge-headtable',
-    icon: Star,
-    label: 'Head Table',
-    cardClass: 'glass',
+    accentColor: '#D4AF37', // Gold for custom titles (or keep lavender indigo, let's use Gold if they are President/Vice President to make it luxurious!)
+    roleLabel: 'Head Table',
+    badgeClass: 'badge-headtable',
+    cssClass: 'member-card-headtable',
   },
   MEMBER: {
-    badge: 'badge-member',
-    icon: User,
-    label: 'Member',
-    cardClass: 'glass',
+    accentColor: '#38bdf8', // Sapphire Cyan
+    roleLabel: 'Member',
+    badgeClass: 'badge-member',
+    cssClass: 'member-card-member',
   },
 }
 
 export function MemberCard({ member, index = 0 }: MemberCardProps) {
-  const config = roleConfig[member.memberRole] ?? roleConfig.MEMBER
-  const Icon = config.icon
+  const router = useRouter()
+  const config = roleConfig[member.memberRole] || roleConfig.MEMBER
+  const roleLabel = getMemberRoleLabel(member.memberRole, member.fullName)
+  const isLeadership = member.memberRole === 'HEAD_TABLE' && roleLabel !== 'Head Table'
+  // Use gold color for key leaders (President/Vice President) for premium aesthetics
+  const accentColor = isLeadership ? '#D4AF37' : config.accentColor
+  const waUrl = member.whatsapp ? getWhatsAppUrl(member.whatsapp) : null
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // If clicked on action buttons or social links, do not trigger card-wide navigation
+    if ((e.target as HTMLElement).closest('a, button')) return
+    router.push(`/members/${member.slug}`)
+  }
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-      whileHover={{ y: -4, transition: { duration: 0.2 } }}
-      className={`relative rounded-2xl p-5 premium-card cursor-default group ${config.cardClass}`}
+      transition={{ duration: 0.4, delay: index * 0.03 }}
+      onClick={handleCardClick}
+      className={`member-card ${config.cssClass}`}
     >
-      {/* Role badge */}
-      <div className="absolute top-4 right-4">
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${config.badge}`}>
-          <Icon className="w-3 h-3" />
-          {config.label}
-        </span>
+      {/* Portrait Photo Container */}
+      <div className="member-card-photo">
+        <Image
+          src={member.profileImage || "/uploads/default-avatar.png"}
+          alt={toTitleCase(member.fullName)}
+          fill
+          sizes="(max-width: 768px) 100vw, 350px"
+          priority={index < 8}
+          style={{
+            objectFit: 'cover',
+            objectPosition: 'top center',
+          }}
+        />
+        {/* Soft bottom blend mask */}
+        <div className="member-card-overlay" />
+
+        {/* Top-Left Glassmorphic Role Badge */}
+        <div className="member-card-badge">
+          <span style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 5,
+            padding: '4px 10px',
+            borderRadius: 8,
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: `1px solid ${accentColor}20`,
+            color: accentColor,
+            fontSize: 9,
+            fontWeight: 800,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}>
+            <span style={{
+              width: 5,
+              height: 5,
+              borderRadius: '50%',
+              backgroundColor: accentColor,
+              boxShadow: `0 0 6px ${accentColor}`,
+            }} />
+            {roleLabel}
+          </span>
+        </div>
       </div>
 
-      {/* Profile */}
-      <div className="flex items-start gap-4 mb-4">
-        <div className="relative flex-shrink-0">
-          <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white/10">
-            {member.profileImage ? (
-              <Image
-                src={member.profileImage}
-                alt={member.fullName}
-                width={64}
-                height={64}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#B61F2B]/30 to-[#7A111B]/20">
-                <span className="text-white/60 font-bold text-xl">
-                  {member.fullName.charAt(0)}
-                </span>
-              </div>
-            )}
+      {/* Info and Action Box */}
+      <div className="member-card-info">
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            color: '#ffffff',
+            fontWeight: 800,
+            fontSize: 16,
+            letterSpacing: '-0.01em',
+            lineHeight: 1.25,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
+            {toTitleCase(member.fullName)}
           </div>
-          {member.featured && (
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-[#D4AF37] flex items-center justify-center">
-              <Star className="w-3 h-3 text-black fill-black" />
+          
+          <div style={{
+            color: accentColor,
+            fontSize: 12,
+            fontWeight: 600,
+            marginTop: 4,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            opacity: 0.95,
+          }}>
+            {member.businessName}
+          </div>
+
+          {member.category && (
+            <div style={{
+              display: 'inline-flex',
+              marginTop: 6,
+              padding: '2px 8px',
+              borderRadius: 6,
+              background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.06)',
+              color: 'rgba(255,255,255,0.45)',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '0.01em',
+            }}>
+              {member.category.name}
             </div>
           )}
         </div>
 
-        <div className="flex-1 min-w-0 pr-20">
-          <h3 className="font-semibold text-white text-base leading-tight truncate">
-            {member.fullName}
-          </h3>
-          <p className="text-white/60 text-sm truncate mt-0.5">{member.businessName}</p>
-          {member.category && (
-            <span className="inline-flex items-center mt-1.5 px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[11px] text-white/50">
-              {member.category.name}
-            </span>
+        {/* Hover-reveal action bar */}
+        <div className="member-card-actions">
+          {member.phone && (
+            <a
+              href={`tel:${member.phone}`}
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.7)',
+              }}
+              title="Call"
+            >
+              <Phone size={12} />
+            </a>
           )}
+          {waUrl && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.7)',
+              }}
+              title="WhatsApp"
+            >
+              <MessageCircle size={12} />
+            </a>
+          )}
+          {member.website && (
+            <a
+              href={member.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.7)',
+              }}
+              title="Website"
+            >
+              <Globe size={12} />
+            </a>
+          )}
+          <Link
+            href={`/members/${member.slug}`}
+            style={{
+              flex: 1,
+              height: 32,
+              borderRadius: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              background: accentColor,
+              border: `1px solid ${accentColor}40`,
+              color: '#050505',
+              fontSize: 10.5,
+              fontWeight: 700,
+              textDecoration: 'none',
+            }}
+          >
+            <span>Profile</span>
+            <ArrowRight size={11} />
+          </Link>
         </div>
-      </div>
-
-      {/* Intro */}
-      {member.shortIntro && (
-        <p className="text-white/50 text-sm leading-relaxed mb-4 line-clamp-2">
-          {member.shortIntro}
-        </p>
-      )}
-
-      {/* Action Buttons */}
-      <div className="flex gap-2 flex-wrap">
-        {member.phone && (
-          <a
-            href={`tel:${member.phone}`}
-            className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-green-500/20 hover:text-green-400 text-white/60 text-xs font-medium transition-all duration-200 border border-white/10 hover:border-green-500/30"
-            aria-label={`Call ${member.fullName}`}
-          >
-            <Phone className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">Call</span>
-          </a>
-        )}
-        {member.whatsapp && (
-          <a
-            href={getWhatsAppUrl(member.whatsapp)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-[#25D366]/20 hover:text-[#25D366] text-white/60 text-xs font-medium transition-all duration-200 border border-white/10 hover:border-[#25D366]/30"
-            aria-label={`WhatsApp ${member.fullName}`}
-          >
-            <MessageCircle className="w-3.5 h-3.5 flex-shrink-0" />
-            <span className="truncate">WhatsApp</span>
-          </a>
-        )}
-        {member.website && (
-          <a
-            href={member.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white/5 hover:bg-blue-500/20 hover:text-blue-400 text-white/60 text-xs font-medium transition-all duration-200 border border-white/10 hover:border-blue-500/30"
-            aria-label={`Visit ${member.businessName} website`}
-          >
-            <Globe className="w-3.5 h-3.5" />
-          </a>
-        )}
-        <Link
-          href={`/members/${member.slug}`}
-          className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-[#B61F2B]/80 to-[#7A111B]/80 hover:from-[#B61F2B] hover:to-[#7A111B] text-white text-xs font-medium transition-all duration-200 border border-[#B61F2B]/30"
-          aria-label={`View ${member.fullName}'s profile`}
-        >
-          <User className="w-3.5 h-3.5" />
-          <span>Profile</span>
-        </Link>
       </div>
     </motion.div>
   )
 }
+

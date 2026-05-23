@@ -4,9 +4,12 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { getMemberRoleLabel, getWhatsAppUrl } from '@/lib/utils'
-import { Phone, MessageCircle, Globe, Mail, MapPin, Crown, Shield, Star, Users, Share2, Download, ArrowLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { getMemberRoleLabel, getWhatsAppUrl, toTitleCase } from '@/lib/utils'
+import {
+  Phone, MessageCircle, Globe, Mail, MapPin, Crown, Shield, Star, Users,
+  Download, ArrowLeft, Clock,
+} from 'lucide-react'
+import { QRCard } from '@/components/members/QRCard'
 import type { Metadata } from 'next'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -26,29 +29,46 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
   const member = await getMember(slug)
   if (!member) return { title: 'Member Not Found' }
+  const formattedName = toTitleCase(member.fullName)
   return {
-    title: `${member.fullName} — ${member.businessName}`,
-    description: member.shortIntro ?? `${member.fullName} is a member of BNI Krypton, Nagpur.`,
+    title: `${formattedName} — ${member.businessName}`,
+    description: member.shortIntro ?? `${formattedName} is a member of BNI Krypton, Nagpur.`,
     openGraph: {
-      title: `${member.fullName} | BNI Krypton`,
+      title: `${formattedName} | BNI Krypton`,
       description: member.shortIntro ?? '',
       images: member.profileImage ? [{ url: member.profileImage }] : [],
     },
   }
 }
 
-const roleIcons = {
-  ED: Crown,
-  SUPPORT: Shield,
-  HEAD_TABLE: Star,
-  MEMBER: Users,
+const roleAccentMap: Record<string, { color: string; glow: string; badgeClass: string; icon: React.ElementType }> = {
+  ED:         { color: '#D4AF37', glow: 'rgba(212,175,55,0.18)',  badgeClass: 'badge-ed',        icon: Crown  },
+  HEAD_TABLE: { color: '#818cf8', glow: 'rgba(129,140,248,0.18)', badgeClass: 'badge-headtable', icon: Star   },
+  SUPPORT:    { color: '#E85464', glow: 'rgba(232,84,100,0.18)',  badgeClass: 'badge-support',   icon: Shield },
+  MEMBER:     { color: '#38bdf8', glow: 'rgba(56,189,248,0.14)',  badgeClass: 'badge-member',    icon: Users  },
 }
 
-const roleBadgeClass = {
-  ED: 'badge-ed',
-  SUPPORT: 'badge-support',
-  HEAD_TABLE: 'badge-headtable',
-  MEMBER: 'badge-member',
+function InfoSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{
+      background: '#161616',
+      border: '1px solid rgba(255,255,255,0.07)',
+      borderRadius: 16,
+      padding: '28px 32px',
+    }}>
+      <h2 style={{
+        color: 'rgba(255,255,255,0.40)',
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        marginBottom: 18,
+      }}>
+        {title}
+      </h2>
+      {children}
+    </div>
+  )
 }
 
 export default async function MemberProfilePage({ params }: Props) {
@@ -56,18 +76,18 @@ export default async function MemberProfilePage({ params }: Props) {
   const member = await getMember(slug)
   if (!member) notFound()
 
-  const RoleIcon = roleIcons[member.memberRole] ?? Users
+  const accent = roleAccentMap[member.memberRole] ?? roleAccentMap.MEMBER
+  const RoleIcon = accent.icon
   const vcfUrl = `/api/members/${member.slug}/vcf`
+  const waUrl = member.whatsapp ? getWhatsAppUrl(member.whatsapp) : null
+  const name = toTitleCase(member.fullName)
 
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': ['Person', 'LocalBusiness'],
     name: member.fullName,
-    jobTitle: getMemberRoleLabel(member.memberRole),
-    worksFor: {
-      '@type': 'Organization',
-      name: member.businessName
-    },
+    jobTitle: getMemberRoleLabel(member.memberRole, member.fullName),
+    worksFor: { '@type': 'Organization', name: member.businessName },
     url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://krypton.bni-nagpur.in'}/members/${member.slug}`,
     image: member.profileImage || '',
     description: member.shortIntro || '',
@@ -78,96 +98,190 @@ export default async function MemberProfilePage({ params }: Props) {
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
-      <main className="min-h-screen bg-[#0A0A0A] pt-20">
-        {/* Cover Banner */}
-        <div className="relative h-48 md:h-64 bg-gradient-to-br from-[#B61F2B]/30 via-[#111111] to-[#7A111B]/20 overflow-hidden">
-          <div className="absolute inset-0 opacity-[0.03]"
-            style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)', backgroundSize: '60px 60px' }}
-          />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-[#B61F2B]/10 blur-[80px]" />
+
+      <main style={{ minHeight: '100vh', background: '#090909' }}>
+
+        {/* ── Atmospheric Cover ──────────────────────────── */}
+        <div style={{
+          position: 'relative',
+          height: 180,
+          background: `
+            radial-gradient(ellipse 65% 90% at 12% 60%, ${accent.glow} 0%, transparent 58%),
+            radial-gradient(ellipse 45% 60% at 88% 20%, ${accent.glow.replace('0.18', '0.10').replace('0.14', '0.07')} 0%, transparent 55%),
+            linear-gradient(180deg, #1a1212 0%, #0d0d0d 100%)
+          `,
+          overflow: 'hidden',
+        }}>
+          {/* Grid mesh */}
+          <div style={{
+            position: 'absolute', inset: 0,
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '52px 52px',
+            pointerEvents: 'none',
+          }} />
+          {/* Bottom fade */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 100,
+            background: 'linear-gradient(to bottom, transparent, #090909)',
+          }} />
         </div>
 
         <div className="container-main">
-          {/* Profile Header */}
-          <div className="relative -mt-20 mb-8">
-            <div className="glass rounded-3xl p-6 md:p-8 border border-white/10">
-              <div className="flex flex-col md:flex-row gap-6 items-start">
-                {/* Profile Photo */}
-                <div className="relative flex-shrink-0">
-                  <div className={`w-28 h-28 md:w-36 md:h-36 rounded-2xl overflow-hidden border-4 shadow-2xl ${member.memberRole === 'ED' ? 'border-[#D4AF37]/50' : 'border-white/10'}`}>
-                    {member.profileImage ? (
-                      <Image src={member.profileImage} alt={member.fullName} fill className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#B61F2B]/30 to-[#7A111B]/20">
-                        <span className="text-white font-bold text-5xl font-['Playfair_Display']">{member.fullName.charAt(0)}</span>
-                      </div>
-                    )}
+
+          {/* Absolute Back Button inside Cover Banner */}
+          <div style={{ position: 'relative', height: 0 }}>
+            <Link href="/" style={{
+              position: 'absolute',
+              top: -90, // Positioned nicely inside 180px banner, completely out of avatar way
+              left: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '8px 16px',
+              borderRadius: 10,
+              background: 'rgba(0,0,0,0.55)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'rgba(255,255,255,0.80)',
+              fontSize: 13,
+              fontWeight: 600,
+              textDecoration: 'none',
+              zIndex: 20,
+              transition: 'all 0.2s ease',
+            }} className="hover-bg hover-text">
+              <ArrowLeft size={14} /> Back to Directory
+            </Link>
+          </div>
+
+          {/* ── Main Profile Header Card ─────────────────────────────── */}
+          <div style={{ marginBottom: 32, position: 'relative' }}>
+            <div style={{
+              background: '#141414',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: 20,
+              padding: '36px',
+              position: 'relative',
+              boxShadow: '0 8px 48px rgba(0,0,0,0.7)',
+            }}>
+              <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                
+                {/* Avatar with top-border overlap and custom accent badge */}
+                <div style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 12,
+                  marginTop: -86,
+                  position: 'relative',
+                  zIndex: 5,
+                }}>
+                  <div style={{
+                    width: 140,
+                    height: 140,
+                    borderRadius: 20,
+                    border: '4px solid #141414',
+                    outline: `1px solid ${accent.color}45`,
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    flexShrink: 0,
+                    background: '#0d0d0d',
+                  }}>
+                    <Image
+                      src={member.profileImage || '/uploads/default-avatar.png'}
+                      alt={name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 140px"
+                      className="object-cover"
+                      style={{ objectFit: 'cover', objectPosition: 'top center' }}
+                    />
                   </div>
+                  {/* Role badge */}
+                  <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${accent.badgeClass}`}>
+                    <RoleIcon className="w-3.5 h-3.5" />
+                    {getMemberRoleLabel(member.memberRole, member.fullName)}
+                  </span>
                 </div>
 
-                {/* Name & Info */}
-                <div className="flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                      <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-2 ${roleBadgeClass[member.memberRole]}`}>
-                        <RoleIcon className="w-3 h-3" />
-                        {getMemberRoleLabel(member.memberRole)}
-                      </div>
-                      <h1 className="text-2xl md:text-3xl font-bold text-white font-['Playfair_Display']">
-                        {member.fullName}
-                      </h1>
-                      <p className="text-[#D4AF37] font-semibold text-lg mt-1">{member.businessName}</p>
-                      {member.category && (
-                        <span className="inline-block mt-2 px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-white/50 text-sm">
-                          {member.category.name}
-                        </span>
-                      )}
-                    </div>
+                {/* Info and action panel */}
+                <div style={{ flex: 1, minWidth: 280 }}>
+                  <h1 style={{
+                    color: '#F0F0F0',
+                    fontSize: 'clamp(24px, 4vw, 32px)',
+                    fontWeight: 800,
+                    lineHeight: 1.15,
+                    letterSpacing: '-0.02em',
+                    marginBottom: 8,
+                  }}>
+                    {name}
+                  </h1>
+                  <p style={{ color: accent.color, fontSize: 18, fontWeight: 600, marginBottom: 12, letterSpacing: '-0.01em' }}>
+                    {member.businessName}
+                  </p>
+                  
+                  {member.category && (
+                    <span style={{
+                      display: 'inline-flex',
+                      padding: '4px 12px',
+                      borderRadius: 8,
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.09)',
+                      color: 'rgba(255,255,255,0.50)',
+                      fontSize: 13,
+                      fontWeight: 500,
+                      letterSpacing: '-0.01em',
+                      marginBottom: 16,
+                    }}>
+                      {member.category.name}
+                    </span>
+                  )}
 
-                    {/* Share / Back */}
-                    <div className="flex gap-2">
-                      <Link href="/">
-                        <Button variant="outline" size="sm" className="border-white/10 text-white/60 bg-white/5">
-                          <ArrowLeft className="w-4 h-4 mr-1" /> Back
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
+                  {/* Tagline removed from here to prevent duplicate about info */}
 
-                  {/* Quick Actions */}
-                  <div className="flex flex-wrap gap-2 mt-4">
+                  {/* Divider */}
+                  <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '24px 0' }} />
+
+                  {/* Action pills row */}
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                     {member.phone && (
-                      <a href={`tel:${member.phone}`}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-green-500/10 hover:bg-green-500/20 text-green-400 text-sm font-medium transition-all border border-green-500/20">
-                        <Phone className="w-4 h-4" /> {member.phone}
+                      <a href={`tel:${member.phone}`} className="action-pill hover-bg" style={{
+                        background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.20)', color: '#4ade80',
+                      }}>
+                        <Phone size={14} /> Call {member.phone}
                       </a>
                     )}
-                    {member.whatsapp && (
-                      <a href={getWhatsAppUrl(member.whatsapp)} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] text-sm font-medium transition-all border border-[#25D366]/20">
-                        <MessageCircle className="w-4 h-4" /> WhatsApp
+                    {waUrl && (
+                      <a href={waUrl} target="_blank" rel="noopener noreferrer" className="action-pill hover-bg" style={{
+                        background: 'rgba(37,211,102,0.08)', borderColor: 'rgba(37,211,102,0.20)', color: '#25D366',
+                      }}>
+                        <MessageCircle size={14} /> WhatsApp
                       </a>
                     )}
                     {member.email && (
-                      <a href={`mailto:${member.email}`}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-sm font-medium transition-all border border-blue-500/20">
-                        <Mail className="w-4 h-4" /> Email
+                      <a href={`mailto:${member.email}`} className="action-pill hover-bg" style={{
+                        background: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.20)', color: '#60a5fa',
+                      }}>
+                        <Mail size={14} /> Send Email
                       </a>
                     )}
                     {member.website && (
-                      <a href={member.website} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-sm font-medium transition-all border border-purple-500/20">
-                        <Globe className="w-4 h-4" /> Website
+                      <a href={member.website} target="_blank" rel="noopener noreferrer" className="action-pill hover-bg" style={{
+                        background: 'rgba(167,139,250,0.08)', borderColor: 'rgba(167,139,250,0.20)', color: '#a78bfa',
+                      }}>
+                        <Globe size={14} /> Visit Website
                       </a>
                     )}
-                    <a href={vcfUrl}
-                      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] text-sm font-medium transition-all border border-[#D4AF37]/20">
-                      <Download className="w-4 h-4" /> Save Contact
+                    <a href={vcfUrl} className="action-pill hover-bg" style={{
+                      background: `${accent.color}0d`, borderColor: `${accent.color}28`, color: accent.color,
+                    }}>
+                      <Download size={14} /> Save Contact
                     </a>
                   </div>
                 </div>
@@ -175,136 +289,165 @@ export default async function MemberProfilePage({ params }: Props) {
             </div>
           </div>
 
-          {/* Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-16">
-            {/* Main Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {/* About */}
-              {member.fullDescription && (
-                <div className="glass rounded-2xl p-6 border border-white/10">
-                  <h2 className="text-lg font-semibold text-white mb-3">About</h2>
-                  <p className="text-white/60 leading-relaxed">{member.fullDescription}</p>
-                </div>
-              )}
+          {/* ── Stacked Profile Content (Single Column Layout) ── */}
+          <div className="flex flex-col gap-6 max-w-4xl mx-auto pb-20">
 
-              {/* Services */}
-              {member.services && (
-                <div className="glass rounded-2xl p-6 border border-white/10">
-                  <h2 className="text-lg font-semibold text-white mb-3">Services</h2>
-                  <p className="text-white/60 leading-relaxed whitespace-pre-line">{member.services}</p>
-                </div>
-              )}
+            {member.fullDescription && (
+              <InfoSection title="About Member">
+                <p style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.8, fontSize: 15, whiteSpace: 'pre-line' }}>
+                  {member.fullDescription}
+                </p>
+              </InfoSection>
+            )}
 
-              {/* Referral Expectations */}
-              {member.referralExpectation && (
-                <div className="glass rounded-2xl p-6 border border-white/10 border-l-2 border-l-[#D4AF37]">
-                  <h2 className="text-lg font-semibold text-white mb-3">Looking For Referrals In</h2>
-                  <p className="text-white/60 leading-relaxed">{member.referralExpectation}</p>
-                </div>
-              )}
+            {member.services && (
+              <InfoSection title="Services & Specialties">
+                <p style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.8, fontSize: 15, whiteSpace: 'pre-line' }}>
+                  {member.services}
+                </p>
+              </InfoSection>
+            )}
 
-              {/* Testimonials */}
-              {member.testimonials.length > 0 && (
-                <div className="glass rounded-2xl p-6 border border-white/10">
-                  <h2 className="text-lg font-semibold text-white mb-4">Testimonials</h2>
-                  <div className="space-y-4">
-                    {member.testimonials.map((t) => (
-                      <div key={t.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
-                        <p className="text-white/70 text-sm italic leading-relaxed">&ldquo;{t.content}&rdquo;</p>
-                        <div className="mt-3 flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[#B61F2B]/30 flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">{t.authorName.charAt(0)}</span>
-                          </div>
-                          <span className="text-white/50 text-xs font-medium">{t.authorName}</span>
-                          <div className="flex gap-0.5 ml-auto">
-                            {Array.from({ length: t.rating }).map((_, i) => (
-                              <Star key={i} className="w-3 h-3 text-[#D4AF37] fill-[#D4AF37]" />
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Contact Info */}
-              <div className="glass rounded-2xl p-6 border border-white/10">
-                <h2 className="text-base font-semibold text-white mb-4">Contact Details</h2>
-                <ul className="space-y-3">
-                  {member.address && (
-                    <li className="flex gap-3 text-sm">
-                      <MapPin className="w-4 h-4 text-[#B61F2B] flex-shrink-0 mt-0.5" />
-                      <span className="text-white/60">{member.address}</span>
-                    </li>
-                  )}
-                  {member.email && (
-                    <li className="flex gap-3 text-sm">
-                      <Mail className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
-                      <a href={`mailto:${member.email}`} className="text-white/60 hover:text-white truncate">{member.email}</a>
-                    </li>
-                  )}
-                  {member.businessTiming && (
-                    <li className="flex gap-3 text-sm">
-                      <Star className="w-4 h-4 text-[#B61F2B] flex-shrink-0" />
-                      <span className="text-white/60">{member.businessTiming}</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              {/* Social Links */}
-              {(member.linkedin || member.facebook || member.instagram || member.youtube) && (
-                <div className="glass rounded-2xl p-6 border border-white/10">
-                  <h2 className="text-base font-semibold text-white mb-4">Social Media</h2>
-                  <div className="flex gap-3 flex-wrap">
-                    {member.linkedin && (
-                      <a href={member.linkedin} target="_blank" rel="noopener noreferrer"
-                        className="px-3 py-2 rounded-xl bg-[#0A66C2]/20 text-[#0A66C2] text-xs font-medium border border-[#0A66C2]/30 hover:bg-[#0A66C2]/30 transition-colors">
-                        LinkedIn
-                      </a>
-                    )}
-                    {member.facebook && (
-                      <a href={member.facebook} target="_blank" rel="noopener noreferrer"
-                        className="px-3 py-2 rounded-xl bg-[#1877F2]/20 text-[#1877F2] text-xs font-medium border border-[#1877F2]/30 hover:bg-[#1877F2]/30 transition-colors">
-                        Facebook
-                      </a>
-                    )}
-                    {member.instagram && (
-                      <a href={member.instagram} target="_blank" rel="noopener noreferrer"
-                        className="px-3 py-2 rounded-xl bg-[#E1306C]/20 text-[#E1306C] text-xs font-medium border border-[#E1306C]/30 hover:bg-[#E1306C]/30 transition-colors">
-                        Instagram
-                      </a>
-                    )}
-                    {member.youtube && (
-                      <a href={member.youtube} target="_blank" rel="noopener noreferrer"
-                        className="px-3 py-2 rounded-xl bg-[#FF0000]/20 text-[#FF0000] text-xs font-medium border border-[#FF0000]/30 hover:bg-[#FF0000]/30 transition-colors">
-                        YouTube
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* BNI Badge */}
-              <div className="glass-gold rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#B61F2B] to-[#7A111B] flex items-center justify-center">
-                    <span className="text-white font-bold text-xs">BNI</span>
-                  </div>
-                  <div>
-                    <div className="text-white font-semibold text-sm">BNI Krypton</div>
-                    <div className="text-white/40 text-xs">Nagpur Chapter</div>
-                  </div>
-                </div>
-                <p className="text-white/50 text-xs leading-relaxed">
-                  This member is part of BNI Krypton, a premier business networking chapter in Nagpur.
+            {member.referralExpectation && (
+              <div style={{
+                background: '#161616',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderLeft: `4px solid ${accent.color}`,
+                borderRadius: 16,
+                padding: '28px 32px',
+              }}>
+                <h2 style={{
+                  color: 'rgba(255,255,255,0.40)', fontSize: 12, fontWeight: 700,
+                  letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 18,
+                }}>
+                  Looking for Referrals In
+                </h2>
+                <p style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.8, fontSize: 15, whiteSpace: 'pre-line' }}>
+                  {member.referralExpectation}
                 </p>
               </div>
-            </div>
+            )}
+
+            {/* Contact Details */}
+            <InfoSection title="Contact Details">
+              <ul style={{ display: 'flex', flexDirection: 'column', gap: 16, listStyle: 'none' }}>
+                {member.address && (
+                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                    <MapPin size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                    <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.address}</span>
+                  </li>
+                )}
+                {member.email && (
+                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                    <Mail size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                    <a href={`mailto:${member.email}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s', wordBreak: 'break-all' }} className="hover-text">
+                      {member.email}
+                    </a>
+                  </li>
+                )}
+                {member.phone && (
+                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                    <Phone size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                    <a href={`tel:${member.phone}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-text">
+                      {member.phone}
+                    </a>
+                  </li>
+                )}
+                {member.businessTiming && (
+                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                    <Clock size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                    <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.businessTiming}</span>
+                  </li>
+                )}
+              </ul>
+            </InfoSection>
+
+            {/* Social Media Links */}
+            {(member.linkedin || member.facebook || member.instagram || member.youtube) && (
+              <InfoSection title="Social Media">
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {member.linkedin && (
+                    <a href={member.linkedin} target="_blank" rel="noopener noreferrer"
+                      className="action-pill hover-bg" style={{
+                        background: 'rgba(10,102,194,0.06)', borderColor: 'rgba(10,102,194,0.18)', color: '#4f9cf9', fontSize: 13,
+                      }}>
+                      <Globe size={13} /> LinkedIn
+                    </a>
+                  )}
+                  {member.facebook && (
+                    <a href={member.facebook} target="_blank" rel="noopener noreferrer"
+                      className="action-pill hover-bg" style={{
+                        background: 'rgba(24,119,242,0.06)', borderColor: 'rgba(24,119,242,0.18)', color: '#6ba3f9', fontSize: 13,
+                      }}>
+                      <Globe size={13} /> Facebook
+                    </a>
+                  )}
+                  {member.instagram && (
+                    <a href={member.instagram} target="_blank" rel="noopener noreferrer"
+                      className="action-pill hover-bg" style={{
+                        background: 'rgba(225,48,108,0.06)', borderColor: 'rgba(225,48,108,0.18)', color: '#f06292', fontSize: 13,
+                      }}>
+                      <Globe size={13} /> Instagram
+                    </a>
+                  )}
+                  {member.youtube && (
+                    <a href={member.youtube} target="_blank" rel="noopener noreferrer"
+                      className="action-pill hover-bg" style={{
+                        background: 'rgba(255,0,0,0.05)', borderColor: 'rgba(255,0,0,0.15)', color: '#f87171', fontSize: 13,
+                      }}>
+                      <Globe size={13} /> YouTube
+                    </a>
+                  )}
+                </div>
+              </InfoSection>
+            )}
+
+            {/* Testimonials */}
+            {member.testimonials.length > 0 && (
+              <InfoSection title={`Testimonials (${member.testimonials.length})`}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  {member.testimonials.map((t) => (
+                    <div key={t.id} style={{
+                      background: 'rgba(255,255,255,0.02)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      borderRadius: 12, padding: '20px 24px',
+                    }}>
+                      <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: 14.5, fontStyle: 'italic', lineHeight: 1.7, marginBottom: 16 }}>
+                        &ldquo;{t.content}&rdquo;
+                      </p>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: '50%',
+                            background: `${accent.color}15`, border: `1px solid ${accent.color}25`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <span style={{ color: accent.color, fontSize: 13, fontWeight: 700 }}>
+                              {t.authorName.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <span style={{ color: 'rgba(255,255,255,0.70)', fontSize: 14, fontWeight: 600 }}>
+                            {t.authorName}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', gap: 3 }}>
+                          {Array.from({ length: t.rating }).map((_, i) => (
+                            <Star key={i} size={13} style={{ color: '#D4AF37', fill: '#D4AF37' }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </InfoSection>
+            )}
+
+            {/* QR Card Share & Connect */}
+            <QRCard
+              profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://krypton.bni-nagpur.in'}/members/${member.slug}`}
+              whatsappUrl={getWhatsAppUrl(member.whatsapp || '')}
+              memberName={member.fullName}
+            />
           </div>
         </div>
       </main>

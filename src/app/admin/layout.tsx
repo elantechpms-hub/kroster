@@ -2,11 +2,21 @@ import { AdminSidebar } from '@/components/admin/AdminSidebar'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-[#0A0A0A]">
+    <div style={{ display: 'flex', minHeight: '100vh', background: '#090909' }}>
       <AdminSidebar />
-      <main className="flex-1 ml-0 md:ml-64 p-6 md:p-8">
+      <main style={{
+        flex: 1,
+        marginLeft: 0,
+        padding: '40px 32px',
+        maxWidth: '100%',
+      }} className="md-main-offset">
         {children}
       </main>
+      <style>{`
+        @media (min-width: 768px) {
+          .md-main-offset { margin-left: 232px; }
+        }
+      `}</style>
     </div>
   )
 }

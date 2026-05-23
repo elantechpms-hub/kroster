@@ -31,15 +31,72 @@ async function getMembers() {
   }
 }
 
+function generateWeeklyEvents() {
+  const events = [];
+  const now = new Date();
+  
+  const dates = [
+    { date: new Date('2026-05-26T07:30:00'), isMilestone: false, isFvd: false },
+    { date: new Date('2026-06-02T07:30:00'), isMilestone: true, isFvd: false },
+    { date: new Date('2026-06-09T07:30:00'), isMilestone: false, isFvd: false },
+    { date: new Date('2026-06-16T07:30:00'), isMilestone: false, isFvd: true },
+    { date: new Date('2026-06-23T07:30:00'), isMilestone: false, isFvd: false }
+  ];
+
+  for (const item of dates) {
+    let title = "Weekly Business Conclave — BNI Krypton";
+    let slug = `weekly-meeting-${item.date.toISOString().split('T')[0]}`;
+    let description = "Join BNI Krypton's weekly networking meeting to pitch your business, swap high-quality referrals, and collaborate with Nagpur's elite business professionals.";
+    let image = null;
+
+    if (item.isMilestone) {
+      title = "🏆 300th Landmark Weekly Meeting — BNI Krypton";
+      slug = "300th-milestone-meeting";
+      description = "A momentous milestone! Celebrate our 300th weekly chapter meeting of BNI Krypton. Witness premium networking, special leadership keynotes, and massive business opportunities with Nagpur's leading business network.";
+    } else if (item.isFvd) {
+      title = "🚀 Focus Visitors Day (FVD) — BNI Krypton";
+      slug = "focus-visitors-day-2026";
+      description = "Grow your business exponentially! BNI Krypton is hosting its mega Focus Visitors Day. A high-energy referral day custom-tailored for selected key industries to showcase and connect. Special invitations for:\n\n" + 
+        "• Real Estate: Architects (Commercial/Residential/Landscape), PEB Shed, HVAC Consultant, Civil Lawyers, CCTV, Housekeeping, Water Purifiers\n" +
+        "• Automobile & Transport: Tyre/Accessories Dealers, Taxi Services, Logistics\n" +
+        "• Health & Wellness: Gynaecologists, Cardiologists, Pediatricians, Nutritionists, Gym Owners\n" +
+        "• Events & Lifestyle: Bakers, Banquets, Wedding/Event Planners, Cafés, Graphic Designers, Printing\n" +
+        "• Business Services: Company Secretaries, Manpower Consultants, Grocery Merchants, Stationery, White Goods Dealers.";
+    }
+
+    events.push({
+      id: `dynamic-${slug}`,
+      title,
+      slug,
+      description,
+      eventDate: item.date,
+      location: "Hotel Centre Point, Ramdaspeth, Nagpur",
+      image,
+      isPublished: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+  }
+
+  return events;
+}
+
 async function getEvents() {
   try {
-    return await prisma.event.findMany({
+    const dbEvents = await prisma.event.findMany({
       where: { isPublished: true },
       orderBy: { eventDate: 'asc' },
-      take: 3,
-    })
+    });
+    const dynamicEvents = generateWeeklyEvents();
+    const allEvents = [...dbEvents, ...dynamicEvents];
+    
+    // Sort all events by date ascending
+    allEvents.sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+    
+    // Return the upcoming events (limit to next 6 so the layout is balanced)
+    return allEvents.slice(0, 6);
   } catch {
-    return []
+    return generateWeeklyEvents();
   }
 }
 

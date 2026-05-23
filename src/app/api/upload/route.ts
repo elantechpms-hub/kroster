@@ -9,8 +9,8 @@ export async function POST(req: Request) {
   try {
     const session = await auth()
     
-    // Allow ADMIN or the member themselves to upload images
-    if (!session?.user) {
+    // Allow ADMIN or the member themselves to upload images (bypass in development)
+    if (!session?.user && process.env.NODE_ENV !== 'development') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -27,10 +27,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
 
-    // 300KB limit validation (if they bypass frontend)
-    // We'll actually compress it to < 300KB anyway, but a hard limit on upload size is good (e.g. 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: 'File too large (Max 5MB)' }, { status: 400 })
+    // 500KB strict upload limit validation
+    if (file.size > 500 * 1024) {
+      return NextResponse.json({ error: 'File too large (Max 500KB)' }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
