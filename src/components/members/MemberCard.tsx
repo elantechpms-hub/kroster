@@ -168,9 +168,9 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.7)',
+                background: 'rgba(182, 31, 43, 0.12)',
+                border: '1px solid rgba(182, 31, 43, 0.35)',
+                color: '#E85464',
               }}
               title="Call"
             >
@@ -189,9 +189,9 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.7)',
+                background: 'rgba(37, 211, 102, 0.12)',
+                border: '1px solid rgba(37, 211, 102, 0.35)',
+                color: '#25D366',
               }}
               title="WhatsApp"
             >
@@ -210,9 +210,9 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(255,255,255,0.06)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.7)',
+                background: 'rgba(0, 164, 239, 0.12)',
+                border: '1px solid rgba(0, 164, 239, 0.35)',
+                color: '#00A4EF',
               }}
               title="Website"
             >

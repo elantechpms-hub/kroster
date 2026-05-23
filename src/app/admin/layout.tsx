@@ -6,17 +6,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <AdminSidebar />
       <main style={{
         flex: 1,
-        marginLeft: 0,
         padding: '40px 32px',
         maxWidth: '100%',
-      }} className="md-main-offset">
+      }} className="w-full pl-0 md:pl-60">
         {children}
       </main>
-      <style>{`
-        @media (min-width: 768px) {
-          .md-main-offset { margin-left: 232px; }
-        }
-      `}</style>
     </div>
   )
 }

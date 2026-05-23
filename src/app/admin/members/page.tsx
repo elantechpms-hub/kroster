@@ -21,41 +21,61 @@ export default async function AdminMembersPage() {
   })
 
   return (
-    <div>
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
       {/* Page header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginBottom: 36,
+        paddingBottom: 24,
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        flexWrap: 'wrap',
+        gap: 16
+      }}>
         <div>
           <h1 style={{
-            color: '#F0F0F0', fontSize: 22, fontWeight: 700,
-            fontFamily: '"Playfair Display", serif', letterSpacing: '-0.02em', marginBottom: 4,
+            color: '#F0F0F0',
+            fontSize: 28,
+            fontWeight: 800,
+            fontFamily: '"Playfair Display", serif',
+            letterSpacing: '-0.02em',
+            marginBottom: 6,
           }}>
-            Members
+            Members Directory
           </h1>
-          <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
-            {members.length} total members in the directory
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13.5, fontWeight: 500 }}>
+            {members.length} registered active and leadership members
           </p>
         </div>
-        <Link href="/admin/members/new" className="btn-primary" style={{ fontSize: 13 }}>
-          <Plus size={14} /> Add Member
+        <Link href="/admin/members/new" className="btn-primary" style={{
+          fontSize: 13.5,
+          fontWeight: 700,
+          padding: '12px 24px',
+          borderRadius: 12,
+          boxShadow: '0 8px 20px rgba(182,31,43,0.3)',
+        }}>
+          <Plus size={15} /> Add New Member
         </Link>
       </div>
 
-      {/* Table */}
+      {/* Table Card Wrapper */}
       <div style={{
-        background: '#141414',
+        background: 'linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)',
         border: '1px solid rgba(255,255,255,0.07)',
-        borderRadius: 16,
+        borderRadius: 20,
+        boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
         overflow: 'hidden',
       }}>
         <div style={{ overflowX: 'auto' }}>
-          <table className="admin-table" style={{ minWidth: 680 }}>
+          <table className="admin-table" style={{ minWidth: 800 }}>
             <thead>
-              <tr>
-                <th>Member</th>
-                <th>Role</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th style={{ textAlign: 'right' }}>Action</th>
+              <tr style={{ background: 'rgba(255, 255, 255, 0.01)' }}>
+                <th style={{ padding: '18px 24px', fontSize: 11, letterSpacing: '0.08em' }}>Member Details</th>
+                <th style={{ padding: '18px 24px', fontSize: 11, letterSpacing: '0.08em' }}>Role / Status</th>
+                <th style={{ padding: '18px 24px', fontSize: 11, letterSpacing: '0.08em' }}>Business Category</th>
+                <th style={{ padding: '18px 24px', fontSize: 11, letterSpacing: '0.08em' }}>Directory Status</th>
+                <th style={{ padding: '18px 24px', fontSize: 11, letterSpacing: '0.08em', textAlign: 'right' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -63,52 +83,56 @@ export default async function AdminMembersPage() {
                 const badge = roleBadge[member.memberRole] ?? roleBadge.MEMBER
                 const BadgeIcon = badge.icon
                 return (
-                  <tr key={member.id}>
-                    <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <tr key={member.id} className="transition-colors hover:bg-white/[0.02]">
+                    <td style={{ padding: '16px 24px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
                         <div style={{
-                          width: 38, height: 38, borderRadius: 10,
+                          width: 44, height: 44, borderRadius: 10,
                           overflow: 'hidden', position: 'relative', flexShrink: 0,
                           border: '1px solid rgba(255,255,255,0.08)',
+                          background: '#111111'
                         }}>
                           <Image
                             src={member.profileImage || '/uploads/default-avatar.png'}
                             alt={toTitleCase(member.fullName)}
                             fill
-                            style={{ objectFit: 'cover' }}
+                            style={{ objectFit: 'cover', objectPosition: 'top center' }}
                           />
                         </div>
                         <div>
-                          <div style={{ color: '#F0F0F0', fontWeight: 600, fontSize: 14, letterSpacing: '-0.01em' }}>
+                          <div style={{ color: '#F0F0F0', fontWeight: 700, fontSize: 14.5, letterSpacing: '-0.01em' }}>
                             {toTitleCase(member.fullName)}
                           </div>
-                          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, marginTop: 1 }}>
+                          <div style={{ color: 'rgba(255,255,255,0.40)', fontSize: 12, marginTop: 2 }}>
                             {member.businessName}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td>
+                    <td style={{ padding: '16px 24px' }}>
                       <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5,
-                        padding: '4px 9px', borderRadius: 7,
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '5px 10px', borderRadius: 8,
                         background: badge.bg, color: badge.color,
-                        fontSize: 11, fontWeight: 700, letterSpacing: '0.03em',
+                        fontSize: 10.5, fontWeight: 800, letterSpacing: '0.04em',
+                        textTransform: 'uppercase',
+                        border: `1px solid ${badge.color}25`
                       }}>
-                        <BadgeIcon size={11} />
-                        {badge.label}
+                        <BadgeIcon size={12} />
+                        {getMemberRoleLabel(member.memberRole, member.fullName)}
                       </span>
                     </td>
-                    <td style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13 }}>
+                    <td style={{ padding: '16px 24px', color: 'rgba(255,255,255,0.55)', fontSize: 13.5, fontWeight: 500 }}>
                       {member.category?.name || <span style={{ color: 'rgba(255,255,255,0.20)' }}>—</span>}
                     </td>
-                    <td>
+                    <td style={{ padding: '16px 24px' }}>
                       <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 5,
-                        padding: '4px 9px', borderRadius: 7,
+                        display: 'inline-flex', alignItems: 'center', gap: 6,
+                        padding: '5px 10px', borderRadius: 8,
                         background: member.isActive ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.10)',
                         color: member.isActive ? '#4ade80' : '#f87171',
-                        fontSize: 11, fontWeight: 600,
+                        fontSize: 11, fontWeight: 700,
+                        border: member.isActive ? '1px solid rgba(34,197,94,0.20)' : '1px solid rgba(239,68,68,0.20)'
                       }}>
                         <span style={{
                           width: 5, height: 5, borderRadius: '50%',
@@ -118,17 +142,18 @@ export default async function AdminMembersPage() {
                         {member.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                       <Link href={`/admin/members/${member.id}/edit`} className="admin-edit-btn" style={{
                         display: 'inline-flex', alignItems: 'center', gap: 6,
-                        padding: '7px 13px', borderRadius: 8,
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                        color: 'rgba(255,255,255,0.55)',
-                        fontSize: 12, fontWeight: 600,
+                        padding: '8px 14px', borderRadius: 10,
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.65)',
+                        fontSize: 12.5, fontWeight: 700,
                         textDecoration: 'none',
+                        transition: 'all 0.2s ease',
                       }}>
-                        <Pencil size={12} /> Edit
+                        <Pencil size={12} style={{ color: '#D4AF37' }} /> Edit
                       </Link>
                     </td>
                   </tr>
@@ -136,7 +161,7 @@ export default async function AdminMembersPage() {
               })}
               {members.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', padding: '48px 24px', color: 'rgba(255,255,255,0.30)' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', padding: '60px 24px', color: 'rgba(255,255,255,0.30)' }}>
                     No members found.
                   </td>
                 </tr>

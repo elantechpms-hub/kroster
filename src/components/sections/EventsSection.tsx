@@ -25,15 +25,15 @@ export function EventsSection({ events }: { events: Event[] }) {
 
       <div className="container-main relative">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-16">
           <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#B61F2B]/10 border border-[#B61F2B]/20 text-[#B61F2B] text-sm font-semibold mb-4">
             <Calendar className="w-4 h-4" />
             Upcoming Events
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white font-['Playfair_Display']">
+          <h2 className="text-3xl md:text-4xl font-bold text-white font-['Playfair_Display'] mb-4">
             Connect at Our Events
           </h2>
-          <p className="text-white/50 mt-3 max-w-xl mx-auto">
+          <p className="text-white/60 text-sm max-w-2xl mx-auto leading-relaxed">
             Join weekly BNI meetings and special chapter events to grow your referral network.
           </p>
         </div>
@@ -43,6 +43,7 @@ export function EventsSection({ events }: { events: Event[] }) {
           {events.map((event, i) => {
             const isMilestone = event.slug === '300th-milestone-meeting';
             const isFvd = event.slug === 'focus-visitors-day-2026';
+            const isBizTalk = event.slug === 'biztalk-show-may-2026';
 
             let borderStyle = '1px solid rgba(255, 255, 255, 0.07)';
             let shadowStyle = '0 8px 32px rgba(0, 0, 0, 0.5)';
@@ -59,6 +60,11 @@ export function EventsSection({ events }: { events: Event[] }) {
               shadowStyle = '0 12px 40px rgba(182, 31, 43, 0.14), 0 0 25px rgba(182, 31, 43, 0.06)';
               cardBg = 'linear-gradient(135deg, #1b1213 0%, #0e0a0a 100%)';
               badgeText = '🚀 focus visitors day (fvd)';
+            } else if (isBizTalk) {
+              borderStyle = '1px solid rgba(56, 189, 248, 0.45)';
+              shadowStyle = '0 12px 40px rgba(56, 189, 248, 0.14), 0 0 25px rgba(56, 189, 248, 0.06)';
+              cardBg = 'linear-gradient(135deg, #12181b 0%, #0a0e10 100%)';
+              badgeText = '🎤 BizTalk Special';
             }
 
             return (
@@ -78,7 +84,7 @@ export function EventsSection({ events }: { events: Event[] }) {
                   flexDirection: 'column',
                   position: 'relative',
                 }}
-                className={`premium-card group ${isMilestone ? 'glow-gold' : isFvd ? 'glow-red' : ''}`}
+                className={`premium-card group ${isMilestone ? 'glow-gold' : isFvd ? 'glow-red' : isBizTalk ? 'glow-blue' : ''}`}
               >
                 {/* Event Image or Placeholder */}
                 <div className="h-48 bg-gradient-to-br from-[#B61F2B]/15 to-[#7A111B]/5 relative overflow-hidden">
@@ -95,13 +101,13 @@ export function EventsSection({ events }: { events: Event[] }) {
                     <div style={{
                       background: 'rgba(9, 9, 9, 0.85)',
                       backdropFilter: 'blur(12px)',
-                      border: isMilestone ? '1px solid rgba(212, 175, 55, 0.4)' : isFvd ? '1px solid rgba(182, 31, 43, 0.4)' : '1px solid rgba(255, 255, 255, 0.15)',
+                      border: isMilestone ? '1px solid rgba(212, 175, 55, 0.4)' : isFvd ? '1px solid rgba(182, 31, 43, 0.4)' : isBizTalk ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid rgba(255, 255, 255, 0.15)',
                       borderRadius: 12,
                       padding: '8px 14px',
                       textAlign: 'center',
                       minWidth: 54,
                     }}>
-                      <div style={{ color: isMilestone ? '#D4AF37' : '#F0F0F0', fontWeight: 800, fontSize: 20, lineHeight: 1 }}>
+                      <div style={{ color: isMilestone ? '#D4AF37' : isBizTalk ? '#38BDF8' : '#F0F0F0', fontWeight: 800, fontSize: 20, lineHeight: 1 }}>
                         {new Date(event.eventDate).getDate()}
                       </div>
                       <div style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', marginTop: 3 }}>
@@ -119,9 +125,9 @@ export function EventsSection({ events }: { events: Event[] }) {
                         display: 'inline-flex',
                         padding: '4px 10px',
                         borderRadius: 6,
-                        background: isMilestone ? 'rgba(212, 175, 55, 0.12)' : 'rgba(182, 31, 43, 0.12)',
-                        border: isMilestone ? '1px solid rgba(212, 175, 55, 0.25)' : '1px solid rgba(182, 31, 43, 0.25)',
-                        color: isMilestone ? '#D4AF37' : '#E85464',
+                        background: isMilestone ? 'rgba(212, 175, 55, 0.12)' : isFvd ? 'rgba(182, 31, 43, 0.12)' : isBizTalk ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255, 255, 255, 0.05)',
+                        border: isMilestone ? '1px solid rgba(212, 175, 55, 0.25)' : isFvd ? '1px solid rgba(182, 31, 43, 0.25)' : isBizTalk ? '1px solid rgba(56, 189, 248, 0.25)' : '1px solid rgba(255, 255, 255, 0.1)',
+                        color: isMilestone ? '#D4AF37' : isFvd ? '#E85464' : isBizTalk ? '#38BDF8' : '#ffffff',
                         fontSize: 10,
                         fontWeight: 800,
                         textTransform: 'uppercase',
@@ -166,7 +172,7 @@ export function EventsSection({ events }: { events: Event[] }) {
                       lineHeight: 1.6,
                       marginTop: 16,
                       whiteSpace: 'pre-line',
-                    }} className={isMilestone || isFvd ? "" : "line-clamp-3"}>
+                    }} className={isMilestone || isFvd || isBizTalk ? "" : "line-clamp-3"}>
                       {event.description}
                     </p>
                   )}

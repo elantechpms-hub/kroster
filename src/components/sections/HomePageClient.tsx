@@ -217,7 +217,7 @@ export function HomePageClient({ eds, support, headTable, members, events }: Pro
           {fEDs.length > 0 && (
             <motion.section key="eds" layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
               <SectionHeader icon={Crown} title="Executive Directors" subtitle="Leadership Team" color="#D4AF37" count={fEDs.length} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-[850px] mx-auto mt-6 justify-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full mt-6 justify-center">
                 <AnimatePresence mode="popLayout">
                   {fEDs.map((m, i) => (
                     <motion.div key={m.id} layout initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.03, duration: 0.35 }}>

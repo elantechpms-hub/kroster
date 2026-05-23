@@ -10,14 +10,37 @@ export default async function AdminCategoriesPage() {
   })
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-8">
+    <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        marginBottom: 36,
+        paddingBottom: 24,
+        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+        flexWrap: 'wrap',
+        gap: 16
+      }}>
         <div>
-          <h1 className="text-2xl font-bold text-white font-['Playfair_Display']">Categories</h1>
-          <p className="text-white/50 text-sm mt-1">Manage member business categories</p>
+          <h1 style={{
+            color: '#F0F0F0',
+            fontSize: 28,
+            fontWeight: 800,
+            fontFamily: '"Playfair Display", serif',
+            letterSpacing: '-0.02em',
+            marginBottom: 6,
+          }}>Categories</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 13.5, fontWeight: 500 }}>Manage member business categories</p>
         </div>
         <Link href="/admin/categories/new">
-          <Button className="bg-[#B61F2B] hover:bg-[#7A111B] text-white">
+          <Button className="bg-[#B61F2B] hover:bg-[#7A111B] text-white" style={{
+            fontSize: 13.5,
+            fontWeight: 700,
+            padding: '12px 24px',
+            borderRadius: 12,
+            boxShadow: '0 8px 20px rgba(182,31,43,0.3)',
+            height: 'auto',
+          }}>
             <Plus className="w-4 h-4 mr-2" /> Add Category
           </Button>
         </Link>

@@ -285,6 +285,22 @@ export default async function MemberProfilePage({ params }: Props) {
                     </a>
                   </div>
                 </div>
+
+                {/* QR Card Share & Connect (Moved inside Member Info Header Card) */}
+                <div style={{
+                  flexShrink: 0,
+                  width: '100%',
+                  maxWidth: 320,
+                  minWidth: 280,
+                  margin: '0 auto',
+                }}>
+                  <QRCard
+                    profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://krypton.bni-nagpur.in'}/members/${member.slug}`}
+                    whatsappUrl={getWhatsAppUrl(member.whatsapp || '')}
+                    memberName={member.fullName}
+                  />
+                </div>
+
               </div>
             </div>
           </div>
@@ -292,13 +308,54 @@ export default async function MemberProfilePage({ params }: Props) {
           {/* ── Stacked Profile Content (Single Column Layout) ── */}
           <div className="flex flex-col gap-6 max-w-4xl mx-auto pb-20">
 
-            {member.fullDescription && (
-              <InfoSection title="About Member">
-                <p style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.8, fontSize: 15, whiteSpace: 'pre-line' }}>
-                  {member.fullDescription}
-                </p>
+            {/* About Member & Contact Details Side-by-Side Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: member.fullDescription ? 'repeat(auto-fit, minmax(min(100%, 380px), 1fr))' : '1fr',
+              gap: 24,
+              width: '100%',
+            }}>
+              {member.fullDescription && (
+                <InfoSection title="About Member">
+                  <p style={{ color: 'rgba(255,255,255,0.70)', lineHeight: 1.8, fontSize: 15, whiteSpace: 'pre-line' }}>
+                    {member.fullDescription}
+                  </p>
+                </InfoSection>
+              )}
+
+              <InfoSection title="Contact Details">
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: 16, listStyle: 'none' }}>
+                  {member.address && (
+                    <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                      <MapPin size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                      <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.address}</span>
+                    </li>
+                  )}
+                  {member.email && (
+                    <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                      <Mail size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                      <a href={`mailto:${member.email}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s', wordBreak: 'break-all' }} className="hover-text">
+                        {member.email}
+                      </a>
+                    </li>
+                  )}
+                  {member.phone && (
+                    <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                      <Phone size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                      <a href={`tel:${member.phone}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-text">
+                        {member.phone}
+                      </a>
+                    </li>
+                  )}
+                  {member.businessTiming && (
+                    <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
+                      <Clock size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
+                      <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.businessTiming}</span>
+                    </li>
+                  )}
+                </ul>
               </InfoSection>
-            )}
+            </div>
 
             {member.services && (
               <InfoSection title="Services & Specialties">
@@ -327,40 +384,6 @@ export default async function MemberProfilePage({ params }: Props) {
                 </p>
               </div>
             )}
-
-            {/* Contact Details */}
-            <InfoSection title="Contact Details">
-              <ul style={{ display: 'flex', flexDirection: 'column', gap: 16, listStyle: 'none' }}>
-                {member.address && (
-                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
-                    <MapPin size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
-                    <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.address}</span>
-                  </li>
-                )}
-                {member.email && (
-                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
-                    <Mail size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
-                    <a href={`mailto:${member.email}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s', wordBreak: 'break-all' }} className="hover-text">
-                      {member.email}
-                    </a>
-                  </li>
-                )}
-                {member.phone && (
-                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
-                    <Phone size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
-                    <a href={`tel:${member.phone}`} style={{ color: 'rgba(255,255,255,0.65)', textDecoration: 'none', transition: 'color 0.2s' }} className="hover-text">
-                      {member.phone}
-                    </a>
-                  </li>
-                )}
-                {member.businessTiming && (
-                  <li style={{ display: 'flex', gap: 12, fontSize: 14.5 }}>
-                    <Clock size={16} style={{ color: accent.color, flexShrink: 0, marginTop: 3 }} />
-                    <span style={{ color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{member.businessTiming}</span>
-                  </li>
-                )}
-              </ul>
-            </InfoSection>
 
             {/* Social Media Links */}
             {(member.linkedin || member.facebook || member.instagram || member.youtube) && (
@@ -441,13 +464,6 @@ export default async function MemberProfilePage({ params }: Props) {
                 </div>
               </InfoSection>
             )}
-
-            {/* QR Card Share & Connect */}
-            <QRCard
-              profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://krypton.bni-nagpur.in'}/members/${member.slug}`}
-              whatsappUrl={getWhatsAppUrl(member.whatsapp || '')}
-              memberName={member.fullName}
-            />
           </div>
         </div>
       </main>
