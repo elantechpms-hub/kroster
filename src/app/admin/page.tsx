@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: 'Admin Dashboard | BNI Krypton' }
 
 async function getStats() {
   const [totalMembers, totalCategories, totalEvents, membersByRole] = await Promise.all([
-    prisma.member.count({ where: { isActive: true } }),
+    prisma.member.count({ where: { isActive: true, memberRole: { in: ['MEMBER', 'HEAD_TABLE'] } } }),
     prisma.category.count(),
     prisma.event.count({ where: { isPublished: true } }),
     prisma.member.groupBy({
@@ -22,6 +22,7 @@ async function getStats() {
 
 export default async function AdminDashboard() {
   const { totalMembers, totalCategories, totalEvents, roleCount } = await getStats()
+  const totalProfiles = Object.values(roleCount).reduce((a, b) => a + b, 0)
 
   const stats = [
     { label: 'Total Members',       value: totalMembers,         icon: Users,    topColor: '#B61F2B', href: '/admin/members' },
@@ -170,7 +171,7 @@ export default async function AdminDashboard() {
                   <div style={{
                     height: '100%', borderRadius: 4,
                     background: `linear-gradient(90deg, ${color}, ${color}88)`,
-                    width: `${totalMembers > 0 ? Math.max((count / totalMembers) * 100, count > 0 ? 4 : 0) : 0}%`,
+                    width: `${totalProfiles > 0 ? Math.max((count / totalProfiles) * 100, count > 0 ? 4 : 0) : 0}%`,
                     transition: 'width 0.6s ease',
                   }} />
                 </div>

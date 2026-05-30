@@ -239,30 +239,6 @@ export function Navbar() {
             >
               <LogIn size={13} /> Login
             </Link>
-            <Link href="/admin" style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '7px 15px', borderRadius: 9,
-              background: 'linear-gradient(135deg, #B61F2B, #7A111B)',
-              color: '#fff',
-              fontSize: 13, fontWeight: 600,
-              textDecoration: 'none',
-              boxShadow: '0 2px 10px rgba(182,31,43,0.40)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              transition: 'opacity 0.18s ease, transform 0.15s ease',
-            }}
-              onMouseEnter={e => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.opacity = '0.87';
-                el.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement;
-                el.style.opacity = '1';
-                el.style.transform = 'translateY(0)';
-              }}
-            >
-              <LayoutDashboard size={13} /> Dashboard
-            </Link>
           </div>
 
           {/* Mobile Toggle */}
@@ -354,16 +330,6 @@ export function Navbar() {
                 textDecoration: 'none',
               }}>
                 <LogIn size={15} /> Login
-              </Link>
-              <Link href="/admin" onClick={() => setMobileOpen(false)} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                padding: '13px', borderRadius: 12,
-                background: 'linear-gradient(135deg, #B61F2B, #7A111B)',
-                color: '#fff', fontSize: 14, fontWeight: 600,
-                textDecoration: 'none',
-                boxShadow: '0 6px 20px rgba(182,31,43,0.4)',
-              }}>
-                <LayoutDashboard size={15} /> Admin Dashboard
               </Link>
             </motion.div>
           </motion.div>

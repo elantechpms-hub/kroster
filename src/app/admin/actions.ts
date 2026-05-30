@@ -22,6 +22,11 @@ export async function createMember(data: any) {
   await checkAdmin()
   const slug = slugify(data.fullName)
   
+  if (data.categoryId !== undefined) {
+    if (data.categoryId) data.category = { connect: { id: data.categoryId } }
+    delete data.categoryId
+  }
+  
   await prisma.member.create({
     data: {
       ...data,
@@ -36,17 +41,57 @@ export async function createMember(data: any) {
 }
 
 export async function updateMember(id: string, data: any) {
-  await checkAdmin()
+  const session = await auth()
+  const user = session?.user as any
+  let isAdmin = false
+  if (process.env.NODE_ENV === 'development' && (!user || user.id === 'dev-admin-id')) {
+    isAdmin = true
+  } else if (user?.role === 'ADMIN') {
+    isAdmin = true
+  }
+
+  if (!isAdmin) {
+    if (!user?.email) throw new Error('Unauthorized')
+    const member = await prisma.member.findUnique({ where: { id }, select: { email: true } })
+    if (!member || member.email !== user.email) {
+      throw new Error('Unauthorized: You can only edit your own profile')
+    }
+    // Prevent non-admins from changing roles or active status
+    delete data.memberRole
+    delete data.teamRole
+    delete data.isActive
+    delete data.displayOrder
+    delete data.categoryId
+  }
   
   // Only update slug if fullName changed (for simplicity we can just update it)
   const slug = slugify(data.fullName)
   
+  if (data.categoryId !== undefined) {
+    if (data.categoryId) data.category = { connect: { id: data.categoryId } }
+    else data.category = { disconnect: true }
+    delete data.categoryId
+  }
+  
+  // Find current member to preserve displayOrder if role is not changing
+  const currentMember = await prisma.member.findUnique({ where: { id }, select: { memberRole: true, displayOrder: true } })
+  const newRole = data.memberRole as MemberRole | undefined
+
+  let updatedDisplayOrder = undefined
+  if (newRole && currentMember) {
+    if (newRole !== currentMember.memberRole) {
+      updatedDisplayOrder = newRole === 'ED' ? 1 : newRole === 'SUPPORT' ? 2 : newRole === 'HEAD_TABLE' ? 3 : 10
+    } else {
+      updatedDisplayOrder = currentMember.displayOrder
+    }
+  }
+
   await prisma.member.update({
     where: { id },
     data: {
       ...data,
       slug,
-      displayOrder: data.memberRole === 'ED' ? 1 : data.memberRole === 'SUPPORT' ? 2 : data.memberRole === 'HEAD_TABLE' ? 3 : 10,
+      displayOrder: updatedDisplayOrder,
     }
   })
   

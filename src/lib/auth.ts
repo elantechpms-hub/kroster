@@ -16,6 +16,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         },
       },
       from: process.env.SMTP_FROM,
+      async sendVerificationRequest({ identifier, url, provider }) {
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`\n======================================================`)
+          console.log(`🔑 DEV LOGIN LINK FOR: ${identifier}`)
+          console.log(`👉 ${url}`)
+          console.log(`======================================================\n`)
+          return
+        }
+        
+        const { createTransport } = await import('nodemailer')
+        const transport = createTransport(provider.server)
+        await transport.sendMail({
+          to: identifier,
+          from: provider.from,
+          subject: `Sign in to BNI Krypton`,
+          text: `Sign in by clicking this link: ${url}`,
+          html: `<body style="background: #f9f9f9; padding: 20px;">
+                  <div style="max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 10px;">
+                    <h2>Sign in to BNI Krypton</h2>
+                    <p>Click the button below to sign in:</p>
+                    <a href="${url}" style="display: inline-block; background: #B61F2B; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin-top: 10px;">Sign In</a>
+                  </div>
+                 </body>`
+        })
+      }
     }),
   ],
   pages: {

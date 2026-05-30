@@ -11,6 +11,7 @@ import type { MemberCardData } from '@/types'
 type MemberCardProps = {
   member: MemberCardData
   index?: number
+  variant?: 'grid' | 'list'
 }
 
 const roleConfig = {
@@ -40,7 +41,7 @@ const roleConfig = {
   },
 }
 
-export function MemberCard({ member, index = 0 }: MemberCardProps) {
+export function MemberCard({ member, index = 0, variant = 'grid' }: MemberCardProps) {
   const router = useRouter()
   const config = roleConfig[member.memberRole] || roleConfig.MEMBER
   const roleLabel = getMemberRoleLabel(member.memberRole, member.fullName)
@@ -53,6 +54,99 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
     // If clicked on action buttons or social links, do not trigger card-wide navigation
     if ((e.target as HTMLElement).closest('a, button')) return
     router.push(`/members/${member.slug}`)
+  }
+
+  if (variant === 'list') {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, delay: index * 0.02 }}
+        onClick={handleCardClick}
+        className="member-list-row"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 14,
+          padding: '12px 16px',
+          borderRadius: 16,
+          background: 'rgba(255,255,255,0.02)',
+          border: '1px solid rgba(255,255,255,0.05)',
+          cursor: 'pointer',
+          transition: 'all 0.25s ease',
+        }}
+      >
+        {/* Avatar */}
+        <div style={{
+          width: 44, height: 44, borderRadius: 12, overflow: 'hidden',
+          flexShrink: 0, position: 'relative',
+          border: `2px solid ${accentColor}30`,
+        }}>
+          <Image
+            src={member.profileImage || '/uploads/default-avatar.png'}
+            alt={toTitleCase(member.fullName)}
+            fill
+            sizes="44px"
+            style={{ objectFit: 'cover', objectPosition: 'top center' }}
+          />
+        </div>
+
+        {/* Name + Business */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{
+            color: '#fff', fontWeight: 700, fontSize: 14, lineHeight: 1.3,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {toTitleCase(member.fullName)}
+          </div>
+          <div style={{
+            color: 'rgba(255,255,255,0.4)', fontSize: 12, marginTop: 2,
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {toTitleCase(member.businessName)}
+          </div>
+        </div>
+
+        {/* Category pill */}
+        {member.category && (
+          <div className="member-list-category" style={{
+            padding: '3px 10px', borderRadius: 8,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)',
+            color: 'rgba(255,255,255,0.45)', fontSize: 10, fontWeight: 600,
+            whiteSpace: 'nowrap', flexShrink: 0,
+          }}>
+            {toTitleCase(member.category.name)}
+          </div>
+        )}
+
+        {/* Quick actions */}
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+          {member.phone && (
+            <a href={`tel:${member.phone}`} title="Call" style={{
+              width: 30, height: 30, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(182, 31, 43, 0.12)', border: '1px solid rgba(182, 31, 43, 0.35)',
+              color: '#E85464',
+            }}>
+              <Phone size={12} />
+            </a>
+          )}
+          {waUrl && (
+            <a href={waUrl} target="_blank" rel="noopener noreferrer" title="WhatsApp" style={{
+              width: 30, height: 30, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)',
+              color: '#25D366',
+            }}>
+              <MessageCircle size={12} />
+            </a>
+          )}
+        </div>
+
+        {/* Arrow */}
+        <ArrowRight size={14} color="rgba(255,255,255,0.25)" style={{ flexShrink: 0 }} />
+      </motion.div>
+    )
   }
 
   return (
@@ -107,6 +201,37 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
             {roleLabel}
           </span>
         </div>
+
+        {/* Top-Right Coordinator Ribbon */}
+        {member.teamRole && (
+          <div style={{
+            position: 'absolute',
+            top: 26,
+            right: -46,
+            width: 180,
+            transform: 'rotate(45deg)',
+            background: 'linear-gradient(135deg, #E62738, #9B1420)',
+            color: '#fff',
+            fontSize: 9.5,
+            fontWeight: 850,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            padding: '6px 0',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.7), inset 0 1px 1px rgba(255,255,255,0.4)',
+            zIndex: 10,
+            textAlign: 'center',
+            textShadow: '0 1px 2px rgba(0,0,0,0.8)'
+          }}>
+            <div style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              padding: '0 32px',
+            }}>
+              {member.teamRole}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Info and Action Box */}
@@ -135,7 +260,7 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
             textOverflow: 'ellipsis',
             opacity: 0.95,
           }}>
-            {member.businessName}
+            {toTitleCase(member.businessName)}
           </div>
 
           {member.category && (
@@ -246,3 +371,5 @@ export function MemberCard({ member, index = 0 }: MemberCardProps) {
   )
 }
 
+// CSS for list row hover — inject via style tag in parent or global styles
+// .member-list-row:hover { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; }

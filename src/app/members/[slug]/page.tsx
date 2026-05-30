@@ -9,7 +9,10 @@ import {
   Phone, MessageCircle, Globe, Mail, MapPin, Crown, Shield, Star, Users,
   Download, ArrowLeft, Clock,
 } from 'lucide-react'
+import { generateVCard } from '@/lib/vcard'
 import { QRCard } from '@/components/members/QRCard'
+import { ProfileTracker } from '@/components/members/ProfileTracker'
+import { ProfileActions } from '@/components/members/ProfileActions'
 import type { Metadata } from 'next'
 
 type Props = { params: Promise<{ slug: string }> }
@@ -73,10 +76,18 @@ function InfoSection({ title, children }: { title: string; children: React.React
   )
 }
 
+import { auth } from '@/lib/auth'
+
 export default async function MemberProfilePage({ params }: Props) {
   const { slug } = await params
   const member = await getMember(slug)
   if (!member) notFound()
+  
+  const session = await auth()
+  const user = session?.user as any
+  const isAdmin = user?.role === 'ADMIN' || (process.env.NODE_ENV === 'development' && user?.id === 'dev-admin-id')
+  const isOwner = user?.email === member.email
+  const canEdit = isAdmin || isOwner
 
   const accent = roleAccentMap[member.memberRole] ?? roleAccentMap.MEMBER
   const RoleIcon = accent.icon
@@ -90,21 +101,7 @@ export default async function MemberProfilePage({ params }: Props) {
   const lastName = nameParts.slice(1).join(' ') || ''
   const categoryName = member.category?.name || ''
   
-  const vcardLines = [
-    'BEGIN:VCARD',
-    'VERSION:3.0',
-    `N:${lastName};${firstName};;;`,
-    `FN:${fullName}`,
-    `ORG:${member.businessName}`,
-    member.phone ? `TEL;TYPE=CELL,VOICE:${member.phone}` : '',
-    member.email ? `EMAIL;TYPE=PREF,INTERNET:${member.email}` : '',
-    member.website ? `URL:${member.website}` : '',
-    member.address ? `ADR:;;${member.address};;;` : '',
-    categoryName ? `TITLE:${categoryName}` : '',
-    categoryName ? `CATEGORIES:${categoryName}` : '',
-    'END:VCARD',
-  ].filter(Boolean)
-  const vcardText = vcardLines.join('\r\n')
+  const vcardText = generateVCard(member, categoryName)
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -125,7 +122,8 @@ export default async function MemberProfilePage({ params }: Props) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <Navbar />
 
-      <main style={{ minHeight: '100vh', background: '#090909' }}>
+      <main style={{ minHeight: '100vh', background: 'var(--surface-0)' }}>
+        <ProfileTracker memberId={member.id} />
 
         {/* ── Atmospheric Cover ──────────────────────────── */}
         <div style={{
@@ -134,7 +132,7 @@ export default async function MemberProfilePage({ params }: Props) {
           background: `
             radial-gradient(ellipse 65% 90% at 12% 60%, ${accent.glow} 0%, transparent 58%),
             radial-gradient(ellipse 45% 60% at 88% 20%, ${accent.glow.replace('0.18', '0.10').replace('0.14', '0.07')} 0%, transparent 55%),
-            linear-gradient(180deg, #1a1212 0%, #0d0d0d 100%)
+            linear-gradient(180deg, var(--surface-1) 0%, var(--surface-0) 100%)
           `,
           overflow: 'hidden',
         }}>
@@ -151,14 +149,14 @@ export default async function MemberProfilePage({ params }: Props) {
           {/* Bottom fade */}
           <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, height: 100,
-            background: 'linear-gradient(to bottom, transparent, #090909)',
+            background: 'linear-gradient(to bottom, transparent, var(--surface-0))',
           }} />
         </div>
 
         <div className="container-main">
 
           {/* Back Button positioned elegantly above the profile card */}
-          <div style={{ marginTop: -120, marginBottom: 80 }}>
+          <div style={{ marginTop: -120, marginBottom: 80, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Link href="/" style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -177,6 +175,27 @@ export default async function MemberProfilePage({ params }: Props) {
             }} className="hover-bg hover-text">
               <ArrowLeft size={14} /> Back to Directory
             </Link>
+            
+            {canEdit && (
+              <Link href={`/admin/members/${member.id}/edit`} style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 16px',
+                borderRadius: 10,
+                background: 'rgba(182, 31, 43, 0.2)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                border: '1px solid rgba(182, 31, 43, 0.4)',
+                color: '#fff',
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: 'none',
+                transition: 'all 0.2s ease',
+              }} className="hover-bg hover-text">
+                Edit Profile
+              </Link>
+            )}
           </div>
 
           {/* ── Main Profile Header Card ─────────────────────────────── */}
@@ -189,8 +208,40 @@ export default async function MemberProfilePage({ params }: Props) {
               borderRadius: 32,
               padding: '40px',
               position: 'relative',
-            }}>
-              <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            }} className="profile-header-card">
+              <style>{`
+                .profile-header-flex {
+                  display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start;
+                }
+                .profile-header-qr {
+                  flex-shrink: 0; width: 100%; max-width: 540px; min-width: 320px; margin-left: auto;
+                }
+                @media (max-width: 860px) {
+                  .profile-header-flex {
+                    flex-direction: column;
+                    align-items: center;
+                    text-align: center;
+                  }
+                  .profile-header-info {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    width: 100%;
+                  }
+                  .profile-header-info > div {
+                    justify-content: center;
+                    width: 100%;
+                  }
+                  .profile-header-qr {
+                    margin-left: 0;
+                    margin: 0 auto;
+                  }
+                  .profile-header-card {
+                    padding: 40px 20px;
+                  }
+                }
+              `}</style>
+              <div className="profile-header-flex">
                 
                 {/* Avatar with top-border overlap and custom accent badge */}
                 <div style={{
@@ -204,36 +255,54 @@ export default async function MemberProfilePage({ params }: Props) {
                   zIndex: 5,
                 }}>
                   <div style={{
-                    width: 140,
-                    height: 140,
-                    borderRadius: 20,
-                    border: '4px solid #141414',
+                    width: 160,
+                    height: 160,
+                    borderRadius: 24,
+                    border: '6px solid var(--surface-1)',
                     outline: `1px solid ${accent.color}45`,
                     boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
                     overflow: 'hidden',
                     position: 'relative',
                     flexShrink: 0,
-                    background: '#0d0d0d',
+                    background: 'var(--surface-1)',
                   }}>
                     <Image
                       src={member.profileImage || '/uploads/default-avatar.png'}
                       alt={name}
                       fill
                       priority
-                      sizes="(max-width: 768px) 100vw, 140px"
+                      sizes="(max-width: 768px) 100vw, 160px"
                       className="object-cover"
                       style={{ objectFit: 'cover', objectPosition: 'top center' }}
                     />
                   </div>
                   {/* Role badge */}
-                  <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${accent.badgeClass}`}>
-                    <RoleIcon className="w-3.5 h-3.5" />
-                    {getMemberRoleLabel(member.memberRole, member.fullName)}
-                  </span>
+                  <div className="flex flex-col items-center gap-2">
+                    <span className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${accent.badgeClass}`}>
+                      <RoleIcon className="w-3.5 h-3.5" />
+                      {getMemberRoleLabel(member.memberRole, member.fullName)}
+                    </span>
+                    {member.teamRole && (
+                      <span style={{
+                        background: 'linear-gradient(135deg, #E62738, #B61F2B)',
+                        color: '#fff',
+                        fontSize: 10,
+                        fontWeight: 800,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        padding: '4px 12px',
+                        borderRadius: '6px',
+                        boxShadow: '0 4px 12px rgba(182,31,43,0.3)',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {member.teamRole}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Info and action panel */}
-                <div style={{ flex: 1, minWidth: 280 }}>
+                <div className="profile-header-info" style={{ flex: 1, minWidth: 280 }}>
                   <h1 style={{
                     color: '#F0F0F0',
                     fontSize: 'clamp(24px, 4vw, 32px)',
@@ -245,10 +314,10 @@ export default async function MemberProfilePage({ params }: Props) {
                     {name}
                   </h1>
                   <p style={{ color: accent.color, fontSize: 18, fontWeight: 600, marginBottom: 12, letterSpacing: '-0.01em' }}>
-                    {member.businessName}
+                    {toTitleCase(member.businessName)}
                   </p>
                   
-                  {member.category && (
+                  {member.memberRole !== 'SUPPORT' && member.category && (
                     <span style={{
                       display: 'inline-flex',
                       padding: '4px 12px',
@@ -268,52 +337,20 @@ export default async function MemberProfilePage({ params }: Props) {
                   {/* Divider */}
                   <div style={{ height: 1, background: 'linear-gradient(90deg, rgba(255,255,255,0.1) 0%, transparent 100%)', margin: '24px 0' }} />
 
-                  {/* Action pills row */}
-                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    {member.phone && (
-                      <a href={`tel:${member.phone}`} className="action-pill hover-bg" style={{
-                        background: 'rgba(34,197,94,0.08)', borderColor: 'rgba(34,197,94,0.20)', color: '#4ade80',
-                      }}>
-                        <Phone size={14} /> Call {member.phone}
-                      </a>
-                    )}
-                    {waUrl && (
-                      <a href={waUrl} target="_blank" rel="noopener noreferrer" className="action-pill hover-bg" style={{
-                        background: 'rgba(37,211,102,0.08)', borderColor: 'rgba(37,211,102,0.20)', color: '#25D366',
-                      }}>
-                        <MessageCircle size={14} /> WhatsApp
-                      </a>
-                    )}
-                    {member.email && (
-                      <a href={`mailto:${member.email}`} className="action-pill hover-bg" style={{
-                        background: 'rgba(96,165,250,0.08)', borderColor: 'rgba(96,165,250,0.20)', color: '#60a5fa',
-                      }}>
-                        <Mail size={14} /> Send Email
-                      </a>
-                    )}
-                    {member.website && (
-                      <a href={member.website} target="_blank" rel="noopener noreferrer" className="action-pill hover-bg" style={{
-                        background: 'rgba(167,139,250,0.08)', borderColor: 'rgba(167,139,250,0.20)', color: '#a78bfa',
-                      }}>
-                        <Globe size={14} /> Visit Website
-                      </a>
-                    )}
-                    <a href={vcfUrl} className="action-pill hover-bg" style={{
-                      background: `${accent.color}0d`, borderColor: `${accent.color}28`, color: accent.color,
-                    }}>
-                      <Download size={14} /> Save Contact
-                    </a>
-                  </div>
+                  {/* Action pills row via ProfileActions client component */}
+                  <ProfileActions 
+                    memberId={member.id}
+                    phone={member.phone}
+                    waUrl={waUrl}
+                    email={member.email}
+                    website={member.website}
+                    vcfUrl={vcfUrl}
+                    accentColor={accent.color}
+                  />
                 </div>
 
                 {/* QR Card Share & Connect (Right Aligned in Desktop) */}
-                <div style={{
-                  flexShrink: 0,
-                  width: '100%',
-                  maxWidth: 540,
-                  minWidth: 320,
-                  marginLeft: 'auto',
-                }}>
+                <div className="profile-header-qr">
                   <QRCard
                     profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://krypton.bni-nagpur.in'}/members/${member.slug}`}
                     whatsappUrl={getWhatsAppUrl(member.whatsapp || '')}

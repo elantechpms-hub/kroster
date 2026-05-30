@@ -1,6 +1,21 @@
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
+import { auth } from '@/lib/auth'
+import { redirect } from 'next/navigation'
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth()
+  const user = session?.user as any
+  
+  if (!session) {
+    redirect('/login')
+  }
+
+  const isAdmin = user?.role === 'ADMIN' || (process.env.NODE_ENV === 'development' && user?.id === 'dev-admin-id')
+  
+  if (!isAdmin) {
+    redirect('/')
+  }
+
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#090909', position: 'relative' }}>
       <AdminSidebar />

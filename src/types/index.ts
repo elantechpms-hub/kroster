@@ -22,6 +22,7 @@ export type MemberCardData = {
   shortIntro?: string | null
   profileImage?: string | null
   memberRole: MemberRole
+  teamRole?: string | null
   displayOrder: number
   featured: boolean
 }

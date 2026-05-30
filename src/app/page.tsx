@@ -26,19 +26,32 @@ async function getMembers() {
       ],
     })
     return members
-  } catch {
+  } catch (error) {
+    console.error('Error fetching members from database:', error)
     return []
   }
 }
 
+import { ensureUpcomingTuesdayMeetings } from '@/lib/events'
+
 async function getEvents() {
   try {
+    // Automatically generate missing future Tuesday meetings
+    await ensureUpcomingTuesdayMeetings()
+
+    const now = new Date()
+    now.setHours(0, 0, 0, 0) // keep events happening today visible
+
     const dbEvents = await prisma.event.findMany({
-      where: { isPublished: true },
+      where: { 
+        isPublished: true,
+        eventDate: { gte: now }
+      },
       orderBy: { eventDate: 'asc' },
     });
     return dbEvents;
-  } catch {
+  } catch (error) {
+    console.error('Error fetching events from database:', error)
     return [];
   }
 }
@@ -50,7 +63,8 @@ async function getVacantCategories() {
       orderBy: { name: 'asc' },
     })
     return vacantCats.map(c => c.name)
-  } catch {
+  } catch (error) {
+    console.error('Error fetching vacant categories from database:', error)
     return []
   }
 }

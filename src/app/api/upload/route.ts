@@ -27,37 +27,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
     }
 
-    // 500KB strict upload limit validation
-    if (file.size > 500 * 1024) {
-      return NextResponse.json({ error: 'File too large (Max 500KB)' }, { status: 400 })
+    // 10MB upload limit validation for original files
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File too large (Max 10MB)' }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // Define dimensions based on type
     const isProfile = type === 'profile'
-    const width = isProfile ? 600 : 1200
-    const height = isProfile ? 600 : 800
+    const width = isProfile ? 300 : 1200
+    const height = isProfile ? 300 : 800
+    const maxSizeBytes = isProfile ? 50 * 1024 : 500 * 1024
 
-    // Process image with Sharp
-    const processedBuffer = await sharp(buffer)
+    // Process image with Sharp, auto-reducing quality to ensure it's under the threshold
+    let quality = 80
+    let processedBuffer = await sharp(buffer)
       .resize(width, height, {
         fit: isProfile ? 'cover' : 'inside',
         position: 'center',
       })
-      .avif({ quality: 80, effort: 4 })
+      .avif({ quality, effort: 4 })
       .toBuffer()
 
-    if (processedBuffer.length > 300 * 1024) {
-      // If still over 300KB, compress more aggressively
-      const aggressiveBuffer = await sharp(buffer)
-        .resize(width, height, { fit: isProfile ? 'cover' : 'inside', position: 'center' })
-        .avif({ quality: 60, effort: 6 })
+    while (processedBuffer.length > maxSizeBytes && quality > 20) {
+      quality -= 10
+      processedBuffer = await sharp(buffer)
+        .resize(width, height, {
+          fit: isProfile ? 'cover' : 'inside',
+          position: 'center',
+        })
+        .avif({ quality, effort: 4 })
         .toBuffer()
-      
-      if (aggressiveBuffer.length > 300 * 1024) {
-         console.warn("Could not compress under 300KB, using aggressive buffer anyway")
-      }
     }
 
     // Generate filename

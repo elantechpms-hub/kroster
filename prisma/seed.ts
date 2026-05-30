@@ -70,13 +70,13 @@ function formatWebsite(web: any): string | null {
 async function main() {
   console.log('Starting BNI Krypton Actual Roster Seeding...')
 
-  // Step 0: Clear all existing categories, members, testimonials and analytics
-  console.log('Clearing old database records...')
-  await prisma.memberAnalytics.deleteMany({})
-  await prisma.testimonial.deleteMany({})
-  await prisma.member.deleteMany({})
-  await prisma.category.deleteMany({})
-  await prisma.event.deleteMany({})
+  // Step 0: Skip clearing database records to preserve newly inducted members
+  console.log('Skipping clearing database records to preserve newly inducted members...')
+  // await prisma.memberAnalytics.deleteMany({})
+  // await prisma.testimonial.deleteMany({})
+  // await prisma.member.deleteMany({})
+  // await prisma.category.deleteMany({})
+  // await prisma.event.deleteMany({})
 
   // Step 1: Read the excel sheet
   const excelPath = path.join(process.cwd(), 'GOOGLE FORM FOR ROSTER.xlsx')
@@ -134,7 +134,7 @@ async function main() {
       shortIntro: 'Chapter Director Consultant for BNI Krypton. Leading photography and visual brand consultant.',
       fullDescription: 'Abhishek Dhakate serves as the Chapter Director Consultant for BNI Krypton. His dedication helps structure meetings, monitor chapter health, and consult members on chapter policies.',
       memberRole: MemberRole.SUPPORT,
-      displayOrder: 1,
+      displayOrder: 2,
       featured: false,
     },
     {
@@ -148,7 +148,7 @@ async function main() {
       shortIntro: 'Chapter Area Director Consultant. Supporting business scalability and leadership development.',
       fullDescription: 'Mufazzal Fidvi is the Area Director Consultant. He brings immense business growth experience, guiding chapter leaders and ensuring strategic collaboration within BNI.',
       memberRole: MemberRole.SUPPORT,
-      displayOrder: 2,
+      displayOrder: 1,
       featured: false,
     },
     {
@@ -261,6 +261,13 @@ async function main() {
   // Step 4: Seed manual members (EDs and Supports)
   for (const m of manualMembers) {
     const { categoryName, ...memberData } = m
+    const existing = await prisma.member.findUnique({ where: { slug: memberData.slug } })
+    const emailToSet = existing && existing.email && !existing.email.endsWith('@bnikrypton.com')
+      ? existing.email
+      : memberData.email
+    const profileImageToSet = existing && existing.profileImage ? existing.profileImage : null
+    const teamRoleToSet = existing && existing.teamRole ? existing.teamRole : null
+
     await prisma.member.upsert({
       where: { slug: memberData.slug },
       update: {
@@ -269,12 +276,14 @@ async function main() {
         categoryId: categoryIdMap[categoryName],
         phone: memberData.phone,
         whatsapp: memberData.whatsapp,
-        email: memberData.email,
+        email: emailToSet,
         shortIntro: memberData.shortIntro,
         fullDescription: memberData.fullDescription,
         memberRole: memberData.memberRole,
         displayOrder: memberData.displayOrder,
         featured: memberData.featured,
+        profileImage: profileImageToSet,
+        teamRole: teamRoleToSet,
         isActive: true,
       },
       create: {
@@ -284,12 +293,14 @@ async function main() {
         categoryId: categoryIdMap[categoryName],
         phone: memberData.phone,
         whatsapp: memberData.whatsapp,
-        email: memberData.email,
+        email: emailToSet,
         shortIntro: memberData.shortIntro,
         fullDescription: memberData.fullDescription,
         memberRole: memberData.memberRole,
         displayOrder: memberData.displayOrder,
         featured: memberData.featured,
+        profileImage: profileImageToSet,
+        teamRole: teamRoleToSet,
         isActive: true,
       },
     })
@@ -344,7 +355,14 @@ async function main() {
       shortIntro = 'Lead Visitor Host of BNI Krypton Nagpur. Renowned Homoeopath providing elite health and holistic wellness solutions.'
     }
 
-    const profileImage = slug === 'nishant-barde' ? '/uploads/nishant-barde.avif' : null
+    const existing = await prisma.member.findUnique({ where: { slug } })
+    const emailToSet = existing && existing.email && !existing.email.endsWith('@bnikrypton.com')
+      ? existing.email
+      : (slug + '@bnikrypton.com')
+    const profileImageToSet = existing && existing.profileImage 
+      ? existing.profileImage 
+      : (slug === 'nishant-barde' ? '/uploads/nishant-barde.avif' : null)
+    const teamRoleToSet = existing && existing.teamRole ? existing.teamRole : null
 
     await prisma.member.upsert({
       where: { slug },
@@ -354,14 +372,15 @@ async function main() {
         categoryId: categoryIdMap[catName] || null,
         phone,
         whatsapp,
-        email: slug + '@bnikrypton.com', // fallback mock email based on slug
+        email: emailToSet,
         website,
         shortIntro,
         fullDescription: shortIntro,
         address: address || null,
         displayOrder: order,
         memberRole: role,
-        profileImage,
+        profileImage: profileImageToSet,
+        teamRole: teamRoleToSet,
         isActive: true,
       },
       create: {
@@ -371,14 +390,15 @@ async function main() {
         categoryId: categoryIdMap[catName] || null,
         phone,
         whatsapp,
-        email: slug + '@bnikrypton.com',
+        email: emailToSet,
         website,
         shortIntro,
         fullDescription: shortIntro,
         address: address || null,
         displayOrder: order,
         memberRole: role,
-        profileImage,
+        profileImage: profileImageToSet,
+        teamRole: teamRoleToSet,
         isActive: true,
       },
     })

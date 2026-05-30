@@ -21,9 +21,17 @@ function formatEventDate(date: Date) {
   }).format(date)
 }
 
+import { ensureUpcomingTuesdayMeetings } from '@/lib/events'
+
 export default async function EventsPage() {
+  // Automatically generate missing future Tuesday meetings
+  await ensureUpcomingTuesdayMeetings()
+
+  const now = new Date()
+  now.setHours(0, 0, 0, 0) // keep events happening today visible
+
   const events = await prisma.event.findMany({
-    where: { isPublished: true, eventDate: { gte: new Date() } },
+    where: { isPublished: true, eventDate: { gte: now } },
     orderBy: { eventDate: 'asc' },
   })
 

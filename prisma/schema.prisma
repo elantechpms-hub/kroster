@@ -122,6 +122,7 @@ model Member {
   featured            Boolean         @default(false)
   displayOrder        Int             @default(999)
   memberRole          MemberRole      @default(MEMBER)
+  teamRole            String?         @db.VarChar(191)
   isActive            Boolean         @default(true)
   testimonials        Testimonial[]
   analytics           MemberAnalytics?

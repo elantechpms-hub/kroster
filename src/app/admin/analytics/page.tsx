@@ -5,8 +5,17 @@ import { toTitleCase } from '@/lib/utils'
 
 export const metadata: Metadata = { title: 'Analytics Dashboard | BNI Krypton' }
 
+import { auth } from '@/lib/auth'
+
 async function getAnalyticsData() {
+  const session = await auth()
+  const user = session?.user as any
+  const isAdmin = user?.role === 'ADMIN' || (process.env.NODE_ENV === 'development' && user?.id === 'dev-admin-id')
+
+  const whereClause = isAdmin ? {} : { member: { email: user?.email } }
+
   const analyticsList = await prisma.memberAnalytics.findMany({
+    where: whereClause,
     include: {
       member: {
         select: {
@@ -134,7 +143,7 @@ export default async function AnalyticsPage() {
                     {toTitleCase(item.member.fullName)}
                   </td>
                   <td style={{ color: 'rgba(255,255,255,0.5)' }}>
-                    {item.member.businessName}
+                    {toTitleCase(item.member.businessName)}
                   </td>
                   <td style={{ textAlign: 'right', fontWeight: 700, color: '#38bdf8' }}>
                     {item.profileViews}
